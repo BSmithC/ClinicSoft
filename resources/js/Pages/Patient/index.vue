@@ -9,7 +9,7 @@
         </template>
 
         <template #default>
-            <div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+            <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6">
                 <!-- Main Content Container -->
                 <div class="max-w-7xl mx-auto">
                     <!-- Action Bar -->
@@ -47,38 +47,38 @@
                     </div>
 
                     <!-- Patients Table -->
-                    <div class="bg-white dark:bg-gray-800  shadow-md overflow-hidden">
+                    <div  class="backdrop-blur-lg bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-lg overflow-hidden border border-white/20 dark:border-gray-700/50">
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead
                                     class="bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-800 dark:to-indigo-800">
                                     <tr>
                                         <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                            class="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">
                                             ID
                                         </th>
                                         <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                                            NOMBRE COMPLETO
+                                            class="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                            NOMBRE
                                         </th>
                                         <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                            class="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">
                                             FECHA NAC.
                                         </th>
                                         <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                            class="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">
                                             SEGURO
                                         </th>
                                         <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                            class="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">
                                             LUGAR NAC.
                                         </th>
                                         <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                            class="px-6 py-4 text-left text-xs font-medium text-white uppercase tracking-wider">
                                             ESTADO
                                         </th>
                                         <th scope="col"
-                                            class="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">
+                                            class="px-6 py-4 text-right text-xs font-medium text-white uppercase tracking-wider">
                                             ACCIONES
                                         </th>
                                     </tr>
