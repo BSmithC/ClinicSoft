@@ -8,11 +8,15 @@ use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Log;
 // use Illuminate\Support\;
 
 class BillController extends Controller
 {
+    public function __construct()
+    {
+        $this->authorizeResource(Bill::class, 'bill');
+    }
+
     public function index(Request $request)
     {
         $search = $request->input('search');
@@ -46,9 +50,9 @@ class BillController extends Controller
 
     public function create()
     {
-        $patients = Patient::all();
-        $users = User::all();
-        $drugs = Drug::all();
+        $patients = Patient::query()->get(['id', 'name', 'last_name']);
+        $users = User::query()->get(['id', 'name', 'last_name']);
+        $drugs = Drug::query()->get(['id', 'name']);
         return Inertia::render('Bill/create',['patients' => $patients, 'users' => $users, 'drugs' => $drugs]);
     }
 
@@ -69,30 +73,27 @@ class BillController extends Controller
         'details.*.hour' => 'required',
         'details.*.price' => 'required|numeric|min:0',
         ]);
-        Log::info($validated);
         $bill = $validated['form'];
         $created_bill = Bill::create($bill);
         $created_bill->BillDetails()->createMany($validated['details']);
         return redirect()->route('bills.index')->with('success', 'Factura creada correctamente.');
     }
 
-    public function show(string $id)
+    public function show(Bill $bill)
     {
-        $bill = Bill::findOrFail($id);
         $bill->load('drugs', 'patient', 'user', 'BillDetails');
         return Inertia::render("Bill/show", ['bills' => $bill]);
     }
 
-    public function edit(string $id)
+    public function edit(Bill $bill)
     {
-        $bill = Bill::findOrFail($id);
-        $users = User::all();
-        $drugs = Drug::all();
+        $users = User::query()->get(['id', 'name', 'last_name']);
+        $drugs = Drug::query()->get(['id', 'name']);
         $bill->load('drugs', 'user', 'BillDetails');
         return Inertia::render('Bill/edit', ['bills' => $bill, 'users' => $users, 'drugs' => $drugs]);
     }
 
-    public function update(Request $request, string $id)
+    public function update(Request $request, Bill $bill)
     {
         $validated = $request->validate([
         'form.drug_id' => 'required|exists:drugs,id',
@@ -109,16 +110,14 @@ class BillController extends Controller
         'details.*.hour' => 'required',
         'details.*.price' => 'required|numeric|min:0',
         ]); 
-        $bill = Bill::findOrFail($id);
-        $formData = $request->input('form');
-        $bill->update($formData);
+        $bill->update($validated['form']);
 
         $bill->BillDetails()->delete();
         $bill->BillDetails()->createMany($validated['details']);
         return redirect()->route('bills.index')->with('success', 'Factura actualizada correctamente.');
 }
 
-    public function destroy(string $id)
+    public function destroy(Bill $bill)
     {
         //
     }

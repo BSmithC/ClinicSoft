@@ -150,7 +150,7 @@
                             </table>
                         </div>
                     </div>
-                                     <Pagination :pagination="patients" :filters="form" />
+                                    <Pagination :pagination="patients" :filters="form" />
                 </div>
             </div>
         </template>

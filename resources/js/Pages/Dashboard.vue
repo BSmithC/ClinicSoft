@@ -4,24 +4,62 @@
     <AuthenticatedLayout>
         <template #header>
             <!-- KPIs -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
                 <CardStats
                     statSubtitle="Pacientes"
                     :statTitle="Kpis.PatientsAll"
                     statIconName="fas fa-user-injured"
                     statIconColor="bg-blue-500"
+                    :show-trend="false"
                 />
                 <CardStats
                     statSubtitle="Medicamentos"
                     :statTitle="Kpis.DrugsAll"
                     statIconName="fas fa-pills"
                     statIconColor="bg-teal-500"
+                    :show-trend="false"
                 />
                 <CardStats
-                    statSubtitle="Citas"
+                    statSubtitle="Médicos activos"
+                    :statTitle="Kpis.ActiveDoctors"
+                    statIconName="fas fa-user-md"
+                    statIconColor="bg-indigo-500"
+                    :show-trend="false"
+                />
+                <CardStats
+                    statSubtitle="Facturación total"
+                    :statTitle="totalBilling"
+                    statIconName="fas fa-file-invoice-dollar"
+                    statIconColor="bg-emerald-500"
+                    :show-trend="false"
+                />
+                <CardStats
+                    statSubtitle="Citas totales"
                     :statTitle="Kpis.AppointmentsAll"
                     statIconName="fas fa-calendar-check"
                     statIconColor="bg-purple-500"
+                    :show-trend="false"
+                />
+                <CardStats
+                    statSubtitle="Citas de hoy"
+                    :statTitle="Kpis.AppointmentsToday"
+                    statIconName="fas fa-calendar-day"
+                    statIconColor="bg-sky-500"
+                    :show-trend="false"
+                />
+                <CardStats
+                    statSubtitle="Pendientes"
+                    :statTitle="Kpis.PendingAppointments"
+                    statIconName="fas fa-hourglass-half"
+                    statIconColor="bg-amber-500"
+                    :show-trend="false"
+                />
+                <CardStats
+                    statSubtitle="Completadas"
+                    :statTitle="Kpis.CompletedAppointments"
+                    statIconName="fas fa-circle-check"
+                    statIconColor="bg-green-500"
+                    :show-trend="false"
                 />
             </div>
 
@@ -58,6 +96,12 @@ export default {
     },
 
     computed: {
+        totalBilling() {
+            return new Intl.NumberFormat('es-ES', {
+                maximumFractionDigits: 2,
+            }).format(Number(this.Kpis.TotalBilling || 0));
+        },
+
         series() {
             return [
                 {

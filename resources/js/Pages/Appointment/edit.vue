@@ -1,138 +1,139 @@
 <template>
-    <Head title="Edit Appointment" />
+    <Head title="Editar cita" />
+
     <AuthenticatedLayout>
         <template #header>
-            <div class="text-white text-2xl font-bold">
-                EDIT APPOINTMENT
-            </div>
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">
+                Editar cita #{{ appointments.id }}
+            </h1>
         </template>
+
         <template #default>
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-                    <form @submit.prevent="submit" class="p-6 space-y-8">
-                        <!-- Three Column Layout -->
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <!-- Left Column - Date and Notes -->
-                            <div class="space-y-6">
-                                <div>
-                                    <h2
-                                        class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center">
-                                        <svg class="w-5 h-5 mr-2 text-purple-600 dark:text-purple-400" fill="none"
-                                            stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                            </path>
-                                        </svg>
-                                        APPOINTMENT DETAILS
-                                    </h2>
-                                                                <!-- Middle Column - Doctor -->
-                            <div class="space-y-6">
-                                <div>
-                                    <h2
-                                        class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center">
-                                        <svg class="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" fill="none"
-                                            stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z">
-                                            </path>
-                                        </svg>
-                                        DOCTOR
-                                    </h2>
-
-                                    <div class="space-y-6">
-                                        <div>
-                                            <label for="doctor-select"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Select
-                                                Doctor</label>
-                                            <select id="doctor-select" v-model="form.doctor_id"
-                                                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:ring-blue-500 focus:border-blue-500 dark:text-white">
-                                                <option disabled value="">Select a doctor</option>
-                                                <option v-for="doctor in doctors" :key="doctor.id" :value="doctor.id">
-                                                    Dr. {{ doctor.name }} {{ doctor.last_name }}
-                                                </option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
+                    <form @submit.prevent="submit" class="p-6 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="doctor-select"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Médico *
+                                </label>
+                                <select id="doctor-select" v-model="form.doctor_id"
+                                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:ring-blue-500 focus:border-blue-500 dark:text-white">
+                                    <option disabled value="">Seleccione un médico</option>
+                                    <option v-for="doctor in doctors" :key="doctor.id" :value="doctor.id">
+                                        Dr. {{ doctor.name }} {{ doctor.last_name }}
+                                    </option>
+                                </select>
+                                <InputError :message="$page.props.errors.doctor_id" class="mt-1" />
                             </div>
 
-                                </div>
+                            <div>
+                                <label for="patient-select"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Paciente *
+                                </label>
+                                <select id="patient-select" v-model="form.patient_id"
+                                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:ring-blue-500 focus:border-blue-500 dark:text-white">
+                                    <option disabled value="">Seleccione un paciente</option>
+                                    <option v-for="patient in patients" :key="patient.id" :value="patient.id">
+                                        {{ patient.name }} {{ patient.last_name }}
+                                    </option>
+                                </select>
+                                <InputError :message="$page.props.errors.patient_id" class="mt-1" />
                             </div>
-                                    <div class="space-y-4">
-                                        <div>
-                                            <label for="datepicker"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
-                                            <div class="relative">
-                                                <div
-                                                    class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <svg class="h-5 w-5 text-gray-400 dark:text-gray-500"
-                                                        fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd"
-                                                            d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-                                                            clip-rule="evenodd"></path>
-                                                    </svg>
-                                                </div>
-                                                <input id="datepicker" type="date" v-model="form.date"
-                                                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:ring-purple-500 focus:border-purple-500 dark:text-white dark:placeholder-gray-400"
-                                                    placeholder="Select date">
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label for="startime"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start
-                                                Time</label>
-                                            <div class="relative">
-                                                <div
-                                                    class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <svg class="h-5 w-5 text-gray-400 dark:text-gray-500"
-                                                        fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd"
-                                                            d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-                                                            clip-rule="evenodd"></path>
-                                                    </svg>
-                                                </div>
-                                                <input id="startime" type="time" v-model="form.starttime"
-                                                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:ring-purple-500 focus:border-purple-500 dark:text-white dark:placeholder-gray-400"
-                                                    placeholder="Select date">
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label for="endtime"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">EndTime</label>
-                                            <div class="relative">
-                                                <div
-                                                    class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <svg class="h-5 w-5 text-gray-400 dark:text-gray-500"
-                                                        fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd"
-                                                            d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-                                                            clip-rule="evenodd"></path>
-                                                    </svg>
-                                                </div>
-                                                <input id="endtime" type="time" v-model="form.endtime"
-                                                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:ring-purple-500 focus:border-purple-500 dark:text-white dark:placeholder-gray-400"
-                                                    placeholder="Select date">
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label for="notes"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
-                                            <textarea id="notes" rows="4" v-model="form.title"
-                                                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:ring-purple-500 focus:border-purple-500 dark:text-white dark:placeholder-gray-400"
-                                                placeholder="Enter appointment notes..."></textarea>
-                                        </div>
-                                    </div>
+
+                            <div>
+                                <label for="drug-select"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Medicamento (opcional)
+                                </label>
+                                <select id="drug-select" v-model="form.drug_id"
+                                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:ring-blue-500 focus:border-blue-500 dark:text-white">
+                                    <option value="">Sin medicamento</option>
+                                    <option v-for="drug in drugs" :key="drug.id" :value="drug.id">
+                                        {{ drug.name }}
+                                    </option>
+                                </select>
+                                <InputError :message="$page.props.errors.drug_id" class="mt-1" />
+                            </div>
+
+                            <div>
+                                <label for="status-select"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Estado *
+                                </label>
+                                <select id="status-select" v-model="form.status"
+                                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:ring-blue-500 focus:border-blue-500 dark:text-white">
+                                    <option v-for="status in statuses" :key="status.value" :value="status.value">
+                                        {{ status.label }}
+                                    </option>
+                                </select>
+                                <InputError :message="$page.props.errors.status" class="mt-1" />
+                            </div>
+
+                            <div>
+                                <label for="datepicker"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Fecha *
+                                </label>
+                                <input id="datepicker" type="date" v-model="form.date"
+                                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:ring-purple-500 focus:border-purple-500 dark:text-white">
+                                <InputError :message="$page.props.errors.date" class="mt-1" />
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="starttime"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Inicio *
+                                    </label>
+                                    <input id="starttime" type="time" v-model="form.starttime"
+                                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:ring-purple-500 focus:border-purple-500 dark:text-white">
+                                </div>
+                                <div>
+                                    <label for="endtime"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Fin *
+                                    </label>
+                                    <input id="endtime" type="time" v-model="form.endtime"
+                                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:ring-purple-500 focus:border-purple-500 dark:text-white">
+                                </div>
+                                <InputError :message="$page.props.errors.starttime" class="mt-1 col-span-2" />
+                                <InputError :message="$page.props.errors.endtime" class="mt-1 col-span-2" />
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label for="notes"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Notas / motivo de la cita *
+                                </label>
+                                <textarea id="notes" rows="3" v-model="form.title"
+                                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:ring-purple-500 focus:border-purple-500 dark:text-white"
+                                    placeholder="Motivo de la consulta..."></textarea>
+                                <InputError :message="$page.props.errors.title" class="mt-1" />
+                            </div>
+                        </div>
+
+                        <div class="rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 p-4">
+                            <p class="text-sm text-blue-800 dark:text-blue-200 font-medium">
+                                Disponibilidad: {{ workingDays }}, {{ availability.start_time }} – {{ availability.end_time }}.
+                            </p>
+                            <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                                Duración permitida: {{ availability.min_duration_minutes }}–{{ availability.max_duration_minutes }} minutos.
+                                No se permiten citas solapadas para el mismo médico.
+                            </p>
                         </div>
 
                         <!-- Form Actions -->
-                        <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
-                            <button type="button" @click="closeModal"
-                                class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-800 transition-colors">
-                                Cancel
-                            </button>
+                        <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <Link :href="route('appointments.index')"
+                                class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                            Cancelar
+                            </Link>
                             <button type="submit"
                                 class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors">
-                                Update Appointment
+                                Actualizar cita
                             </button>
                         </div>
                     </form>
@@ -144,61 +145,110 @@
 
 <script>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
-import { router } from '@inertiajs/vue3';
-import { computed, ref, onMounted } from 'vue';
-import LastDays from '@/Components/LastDays.vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import InputError from '@/Components/InputError.vue';
 
 export default {
+    components: {
+        Head,
+        AuthenticatedLayout,
+        Link,
+        InputError,
+    },
     props: {
-        appointments: Object,
-        doctors: Object,
-        appointment: Object,
+        appointments: {
+            type: Object,
+            required: true,
+        },
+        patients: {
+            type: Array,
+            default: () => [],
+        },
+        doctors: {
+            type: Array,
+            default: () => [],
+        },
+        drugs: {
+            type: Array,
+            default: () => [],
+        },
+        statuses: {
+            type: Array,
+            default: () => [],
+        },
+        availability: {
+            type: Object,
+            default: () => ({
+                start_time: '08:00',
+                end_time: '18:00',
+                weekdays: [1, 2, 3, 4, 5],
+                min_duration_minutes: 15,
+                max_duration_minutes: 240,
+            }),
+        },
     },
     data() {
         return {
             form: {
                 title: '',
+                doctor_id: '',
+                patient_id: '',
+                drug_id: '',
+                status: 'pending',
                 date: '',
                 starttime: '',
                 endtime: '',
-                doctor_id: '',
+                attended: false,
                 active: true,
-                attended: true,
             },
-        }
+        };
+    },
+    computed: {
+        workingDays() {
+            const names = {
+                1: 'lunes',
+                2: 'martes',
+                3: 'miércoles',
+                4: 'jueves',
+                5: 'viernes',
+                6: 'sábado',
+                7: 'domingo',
+            };
+            const days = this.availability.weekdays || [];
+
+            if (days.length === 5 && [1, 2, 3, 4, 5].every((day) => days.includes(day))) {
+                return 'lunes a viernes';
+            }
+
+            return days.map((day) => names[day] || day).join(', ');
+        },
+    },
+    mounted() {
+        const appointment = this.appointments;
+        const status = appointment.status;
+
+        this.form = {
+            title: appointment.title || '',
+            doctor_id: appointment.doctor_id ?? '',
+            patient_id: appointment.patient_id ?? '',
+            drug_id: appointment.drug_id ?? '',
+            status: status && typeof status === 'object' ? status.value : status || 'pending',
+            date: appointment.date || '',
+            starttime: this.formatTime(appointment.starttime),
+            endtime: this.formatTime(appointment.endtime),
+            attended: Boolean(appointment.attended),
+            active: Boolean(appointment.active),
+        };
     },
     methods: {
+        formatTime(time) {
+            return time ? String(time).substring(0, 5) : '';
+        },
         submit() {
-            console.log('Enviando: ', this.form);
-            this.form.date = this.formatDate(this.form.date);
-            this.$inertia.put(route('appointments.update', this.appointments), this.form, {
-                onSuccess: () => {
-                    this.$emit('appointmentUpdated');
-                },
-                onError: (errors) => {
-                    this.errors = errors;
-                }
+            router.put(route('appointments.update', this.appointments.id), this.form, {
+                preserveScroll: true,
             });
         },
-        formatDate(date) {
-            const d = new Date(date);
-            return d.toISOString().split('T')[0]; // "YYYY-MM-DD"
-        },
-        formatTime(time) {
-            const d = new Date(time);
-            return d.toTimeString().split(' ')[0]; // "HH:MM:SS"
-        },
     },
-    components: {
-        Head,
-        AuthenticatedLayout,
-        LastDays,
-        Link,
-        computed,
-        router,
-        ref,
-        onMounted
-    }
 };
 </script>

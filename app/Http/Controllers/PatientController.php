@@ -12,6 +12,11 @@ use Illuminate\Support\Carbon;
 
 class PatientController extends Controller
 {
+    public function __construct()
+    {
+        $this->authorizeResource(Patient::class, 'patient');
+    }
+
 
     public function index(Request $request)
     {
@@ -78,20 +83,18 @@ class PatientController extends Controller
         
         return redirect()->route('patients.index')->with('success', 'Paciente creado correctamente.');
     }
-    public function show(string $id)
+    public function show(Patient $patient)
     {
-        $patient = Patient::findOrFail($id);
         $patient->load('appointment', 'bill');
         return Inertia::render('Patient/show', ['patients' => $patient]);
     }
 
-    public function edit(string $id)
+    public function edit(Patient $patient)
     {
-        $patient = Patient::findOrFail($id);
         return Inertia::render('Patient/edit', ['patients' => $patient]);        
     }
 
-    public function update(Request $request, string $id)
+    public function update(Request $request, Patient $patient)
     {
         $validated = $request->validate([
             'DNI' => 'required|string|max:255',
@@ -114,13 +117,12 @@ class PatientController extends Controller
             'status' => 'boolean',
             'email' => 'required|email|max:255',
         ]); 
-        $patient = Patient::findOrFail($id);
         $patient->update($validated);
         
         return redirect()->route('patients.index')->with('success', 'Paciente actualizado correctamente.');
     }
 
-    public function destroy(string $id)
+    public function destroy(Patient $patient)
     {
         //
     }

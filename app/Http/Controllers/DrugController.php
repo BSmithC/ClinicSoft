@@ -10,6 +10,11 @@ use Illuminate\Support\Carbon;
 
 class DrugController extends Controller
 {
+    public function __construct()
+    {
+        $this->authorizeResource(Drug::class, 'drug');
+    }
+
     public function index(Request $request)
     {        
         $search = $request->input('search');
@@ -60,19 +65,17 @@ class DrugController extends Controller
 
         return redirect()->route('drugs.index')->with('success', 'Medicamento creado correctamente.');
     }
-    public function show(string $id)
+    public function show(Drug $drug)
     {
-        $drugs = Drug::findOrFail($id);
-        return Inertia::render('Drug/show', ['drugs' => $drugs]);
+        return Inertia::render('Drug/show', ['drugs' => $drug]);
     }
 
-    public function edit(string $id)
+    public function edit(Drug $drug)
     {
-        $drugs = Drug::findOrFail($id);
-        return Inertia::render('Drug/edit', ['drugs' => $drugs]);
+        return Inertia::render('Drug/edit', ['drugs' => $drug]);
     }
 
-    public function update(Request $request, string $id)
+    public function update(Request $request, Drug $drug)
     {
         $validated = $request->validate([
         'name' => 'required|string|max:255',
@@ -81,15 +84,14 @@ class DrugController extends Controller
         'frequency' => 'required|string|max:255',
         'duration' => 'required|string|max:255',
         ]);
-        $drugs = Drug::findOrFail($id);
-        $drugs->update($validated);
+        $drug->update($validated);
         return redirect()->route('drugs.index')->with('success', 'Medicamento actualizado correctamente.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Drug $drug)
     {
         //
     }

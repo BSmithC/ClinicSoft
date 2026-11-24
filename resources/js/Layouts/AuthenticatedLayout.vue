@@ -1,38 +1,27 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
-import { Link } from '@inertiajs/vue3';
-// import { useToast } from 'vue-toastification';
-// import { usePage } from '@inertiajs/vue3';
 
 const showingNavigationDropdown = ref(false);
+const page = usePage();
 
-// const toast = useToast();
-// const page = usePage();
-// const shownFlash = ref(null);
+const roles = computed(() => page.props.auth?.user?.roles ?? []);
+const canManageClinic = computed(() => roles.value.includes('admin') || roles.value.includes('doctor'));
 
-// atchEffect(() => {
-//     const flash = page.props.flash;
-
-//     if (flash.toast && flash.toast !== shownFlash.value) {
-//         const style = flash.toastStyle || 'success';
-
-//         if (style === 'danger' || style === 'error') {
-//             toast.error(flash.toast);
-//         } else if (style === 'info') {
-//             toast.info(flash.toast);
-//         } else if (style === 'warning') {
-//             toast.warning(flash.toast);
-//         } else {
-//             toast.success(flash.toast);
-//         }
-//         shownFlash.value = flash.toast;
-//     }
-// });
+const clinicalLinks = computed(() => canManageClinic.value
+    ? [
+        { name: 'patients.index', label: 'Pacientes' },
+        { name: 'drugs.index', label: 'Medicamentos' },
+        { name: 'bills.index', label: 'Facturación' },
+        { name: 'appointments.index', label: 'Citas' },
+        { name: 'medicalhistories.index', label: 'Historias clínicas' },
+    ]
+    : []);
 </script>
 
 <template>
@@ -55,19 +44,15 @@ const showingNavigationDropdown = ref(false);
                             <!-- Navigation Links -->
                             <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                                 <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
-                                    Homes
+                                    Dashboard
                                 </NavLink>
-                                <NavLink :href="route('patients.index')" :active="route().current('patients.index')">
-                                    Patients
-                                </NavLink>
-                                <NavLink :href="route('drugs.index')" :active="route().current('drugs.index')">
-                                    Drugs
-                                </NavLink>
-                                <NavLink :href="route('bills.index')" :active="route().current('bills.index')">
-                                    Bills
-                                </NavLink>
-                                <NavLink :href="route('appointments.index')" :active="route().current('appointments.index')">
-                                    Appointment
+                                <NavLink
+                                    v-for="link in clinicalLinks"
+                                    :key="link.name"
+                                    :href="route(link.name)"
+                                    :active="route().current(link.name)"
+                                >
+                                    {{ link.label }}
                                 </NavLink>
                             </div>
                         </div>
@@ -101,6 +86,9 @@ const showingNavigationDropdown = ref(false);
                                     </template>
 
                                     <template #content>
+                                        <div class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700">
+                                            {{ roles.join(', ') || 'Sin rol' }}
+                                        </div>
                                         <DropdownLink :href="route('profile.edit')"> Profile </DropdownLink>
                                         <DropdownLink :href="route('logout')" method="post" as="button">
                                             Log Out
@@ -152,6 +140,14 @@ const showingNavigationDropdown = ref(false);
                         <ResponsiveNavLink :href="route('dashboard')" :active="route().current('dashboard')">
                             Dashboard
                         </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            v-for="link in clinicalLinks"
+                            :key="link.name"
+                            :href="route(link.name)"
+                            :active="route().current(link.name)"
+                        >
+                            {{ link.label }}
+                        </ResponsiveNavLink>
                     </div>
 
                     <!-- Responsive Settings Options -->
@@ -161,6 +157,9 @@ const showingNavigationDropdown = ref(false);
                                 {{ $page.props.auth.user.name }}
                             </div>
                             <div class="font-medium text-sm text-gray-500">{{ $page.props.auth.user.email }}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {{ roles.join(', ') || 'Sin rol' }}
+                            </div>
                         </div>
 
                         <div class="mt-3 space-y-1">

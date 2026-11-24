@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\BillController;
-use App\Http\Controllers\DoctorControllers;
 use App\Http\Controllers\DrugController;
 use App\Http\Controllers\MedicalHistoryController;
 use App\Http\Controllers\PatientController;
@@ -32,19 +31,20 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard',[DashboardController::class, 'dashboard'])->middleware(['auth'])->name('dashboard');
+Route::get('/dashboard',[DashboardController::class, 'dashboard'])->middleware(['auth', 'role:admin|doctor'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    Route::resource('/patients',PatientController::class);
-    Route::resource('/drugs',DrugController::class);
-    Route::resource('/bills',BillController::class);
-    Route::resource('/appointments',AppointmentController::class);
-    Route::resource('/medicalhistories',MedicalHistoryController::class);
 
-
+    Route::middleware('role:admin|doctor')->group(function () {
+        Route::resource('/patients',PatientController::class);
+        Route::resource('/drugs',DrugController::class);
+        Route::resource('/bills',BillController::class);
+        Route::resource('/appointments',AppointmentController::class);
+        Route::resource('/medicalhistories',MedicalHistoryController::class);
+    });
 });
 
 require __DIR__.'/auth.php';

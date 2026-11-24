@@ -20,7 +20,7 @@
                     </div>
                 </div>
             </div>
-            <p class="text-sm text-gray-500 dark:text-gray-300 mt-4">
+            <p v-if="showTrend" class="text-sm text-gray-500 dark:text-gray-300 mt-4">
                 <span :class="statPercentColor" class="font-semibold">
                     <i :class="[
                         statArrow === 'up' ? 'fas fa-arrow-up' : 'fas fa-arrow-down',
@@ -45,7 +45,7 @@ export default {
             default: "Pacientes",
         },
         statTitle: {
-            type: String,
+            type: [String, Number],
             default: "2,356",
         },
         statArrow: {
@@ -65,6 +65,10 @@ export default {
         statDescripition: {
             type: String,
             default: "Desde el mes pasado",
+        },
+        showTrend: {
+            type: Boolean,
+            default: true,
         },
         statIconName: {
             type: String,

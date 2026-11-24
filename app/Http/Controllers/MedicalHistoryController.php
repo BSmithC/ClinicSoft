@@ -10,10 +10,14 @@ use App\Models\User;
 use App\Models\Drug;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Log;
 
 class MedicalHistoryController extends Controller
 {
+    public function __construct()
+    {
+        $this->authorizeResource(MedicalHistory::class, 'medicalhistory');
+    }
+
 
     public function index()
     {
@@ -25,8 +29,8 @@ class MedicalHistoryController extends Controller
     public function create(Request $request)
     {
         $patients = $request->patient;
-        $doctors = User::all();
-        $drugs = Drug::all();
+        $doctors = User::query()->get(['id', 'name', 'last_name']);
+        $drugs = Drug::query()->get(['id', 'name']);
         return Inertia::render('MedicalHistory/create', ['patients' => $patients, 'doctors' => $doctors, 'drugs' => $drugs]);
     }
 
@@ -51,27 +55,24 @@ class MedicalHistoryController extends Controller
         return redirect()->route('medicalhistories.index')->with('success', 'Historia medico creado correctamente.');
     }
 
-    public function show(string $id)
+    public function show(MedicalHistory $medicalhistory)
     {
-        $medicalhistories = MedicalHistory::findOrFail($id);
-        return Inertia::render('MedicalHistory/show', ['medicalhistories' => $medicalhistories]);
+        return Inertia::render('MedicalHistory/show', ['medicalhistories' => $medicalhistory]);
     }
 
 
-    public function edit(string $id)
+    public function edit(MedicalHistory $medicalhistory)
     {
-        $doctors = User::all();
-        $drugs = Drug::all();
-        $medicalhistories = MedicalHistory::findOrFail($id);
-        $medicalhistories->load('doctor','drug','patient');
-        return Inertia::render('MedicalHistory/edit', ['medicalhistories' => $medicalhistories, 'doctors' => $doctors,'drugs' => $drugs
+        $doctors = User::query()->get(['id', 'name', 'last_name']);
+        $drugs = Drug::query()->get(['id', 'name']);
+        $medicalhistory->load('doctor','drug','patient');
+        return Inertia::render('MedicalHistory/edit', ['medicalhistories' => $medicalhistory, 'doctors' => $doctors,'drugs' => $drugs
         ]);
     }
 
 
-    public function update(Request $request, string $id)
+    public function update(Request $request, MedicalHistory $medicalhistory)
     {
-        $medicalhistory = MedicalHistory::findOrFail($id);
         $validated = $request->validate([
             'diagnosis' => 'required|string|max:255',
             'reason' => 'required|string|max:255',
@@ -87,12 +88,11 @@ class MedicalHistoryController extends Controller
             'patient_id' => 'required|exists:patients,id',
             'doctor_id' => 'required|exists:users,id',
         ]);
-        Log::info($validated);
         $medicalhistory->update($validated);
         return redirect()->route('medicalhistories.index')->with('success', 'Appointment updated successfully.');
     }
 
-    public function destroy(string $id)
+    public function destroy(MedicalHistory $medicalhistory)
     {
         //
     }
