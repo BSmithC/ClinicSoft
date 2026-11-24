@@ -22,6 +22,7 @@ class AvailabilityRequest extends FormRequest
             'session_id' => ['nullable', 'exists:medical_sessions,id'],
             'date' => ['required_without:session_id', 'date_format:Y-m-d'],
             'patient_id' => ['nullable', 'exists:patients,id'],
+            'ignore_id' => ['nullable', 'exists:appointments,id'],
         ];
     }
 }

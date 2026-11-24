@@ -21,6 +21,19 @@ class AvailabilityController extends Controller
         $validated = $request->validated();
         $doctorId = $validated['doctor_id'] ?? null;
 
+        // A session id must never be an escape hatch around the doctor scope.
+        if (! empty($validated['session_id'])) {
+            $sessionDoctorId = MedicalSession::query()
+                ->whereKey($validated['session_id'])
+                ->value('doctor_id');
+
+            if (! $sessionDoctorId) {
+                abort(404, 'La sesión seleccionada no existe.');
+            }
+
+            $doctorId = (int) $sessionDoctorId;
+        }
+
         if (! Auth::user()->isAdmin() && $doctorId && (int) $doctorId !== (int) Auth::id()) {
             abort(403);
         }
@@ -38,21 +51,40 @@ class AvailabilityController extends Controller
         $sessions = $query->get();
         $slots = [];
         $patientId = $validated['patient_id'] ?? null;
+        $ignoreId = $validated['ignore_id'] ?? null;
 
         foreach ($sessions as $session) {
-            $slots[$session->id] = $availability->slotsForSession($session, $patientId ? (int) $patientId : null);
+            $slots[$session->id] = $availability->slotsForSession(
+                $session,
+                $patientId ? (int) $patientId : null,
+                $ignoreId ? (int) $ignoreId : null
+            );
         }
 
         $blockedDates = BlockedDate::query()
             ->when($doctorId, fn ($q) => $q->where('doctor_id', $doctorId))
             ->when(! $doctorId && ! Auth::user()->isAdmin(), fn ($q) => $q->where('doctor_id', Auth::id()))
-            ->get(['doctor_id', 'date', 'reason']);
+            ->when($validated['date'] ?? null, fn ($q, $date) => $q->whereDate('date', $date))
+            ->get(['id', 'doctor_id', 'date', 'reason']);
 
-        // Partial reload target for the appointment wizard (same Inertia component).
+        $availabilityConfig = config('appointments');
+
+        // The calendar form consumes the same service over JSON; the wizard
+        // keeps using Inertia partial reloads against this same endpoint.
+        if ($request->wantsJson()) {
+            return response()->json([
+                'sessions' => $sessions,
+                'slots' => $slots,
+                'blockedDates' => $blockedDates,
+                'availability' => $availabilityConfig,
+            ]);
+        }
+
         return Inertia::render('Appointment/create', [
             'availabilitySessions' => $sessions,
             'availabilitySlots' => $slots,
             'blockedDates' => $blockedDates,
+            'availability' => $availabilityConfig,
         ]);
     }
 }
