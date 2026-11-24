@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" role="img" aria-label="Paciente registrándose en el mostrador de una clínica">
+    <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#f0f9ff" />
+            <stop offset="1" stop-color="#ffffff" />
+        </linearGradient>
+        <linearGradient id="counter" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffffff" />
+            <stop offset="1" stop-color="#e2e8f0" />
+        </linearGradient>
+        <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#0f172a" flood-opacity="0.12" />
+        </filter>
+        <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.10" />
+        </filter>
+    </defs>
+
+    <rect width="1200" height="700" fill="url(#bg)" />
+    <circle cx="1080" cy="90" r="150" fill="#dbeafe" opacity="0.7" />
+    <circle cx="90" cy="620" r="190" fill="#e0f2fe" opacity="0.7" />
+
+    <rect x="120" y="86" width="360" height="260" rx="32" fill="#ffffff" opacity="0.55" />
+    <rect x="742" y="60" width="310" height="220" rx="30" fill="#ffffff" opacity="0.45" />
+
+    <g filter="url(#shadow)">
+        <rect x="0" y="500" width="1200" height="200" rx="36" fill="url(#counter)" />
+        <rect x="0" y="500" width="1200" height="10" fill="#cbd5e1" />
+    </g>
+
+    <g filter="url(#softShadow)">
+        <rect x="826" y="278" width="214" height="150" rx="22" fill="#ffffff" />
+        <rect x="852" y="306" width="76" height="10" rx="5" fill="#2563eb" />
+        <rect x="852" y="332" width="150" height="9" rx="4.5" fill="#cbd5e1" />
+        <rect x="852" y="356" width="112" height="9" rx="4.5" fill="#e2e8f0" />
+        <circle cx="984" cy="314" r="12" fill="#dcfce7" />
+        <path d="M978 314 L983 319 L991 307" fill="none" stroke="#16a34a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+
+    <g filter="url(#shadow)">
+        <path d="M760 500 C760 396 820 324 908 324 C996 324 1056 396 1056 500 Z" fill="#ffffff" />
+        <rect x="886" y="300" width="44" height="46" fill="#e7b899" />
+        <circle cx="908" cy="248" r="64" fill="#efc3a5" />
+        <path d="M844 244 C848 196 876 170 910 170 C946 170 972 196 972 244 C958 218 936 206 908 206 C878 206 858 218 844 244Z" fill="#334155" />
+        <path d="M886 328 L908 370 L930 328 L910 318 H900 Z" fill="#f8fafc" />
+        <path d="M908 370 V500" stroke="#cbd5e1" stroke-width="4" />
+        <path d="M836 352 C806 378 790 414 782 458" fill="none" stroke="#f1f5f9" stroke-width="34" stroke-linecap="round" />
+        <circle cx="782" cy="460" r="20" fill="#efc3a5" />
+    </g>
+
+    <g filter="url(#shadow)">
+        <path d="M150 700 C150 594 218 520 318 520 C418 520 486 594 486 700 Z" fill="#dbeafe" />
+        <rect x="296" y="496" width="44" height="46" fill="#e7b899" />
+        <circle cx="318" cy="442" r="62" fill="#efc3a5" />
+        <path d="M256 438 C260 392 286 368 320 368 C354 368 380 394 380 438 C366 414 346 402 318 402 C288 402 270 414 256 438Z" fill="#475569" />
+        <path d="M296 522 L318 562 L340 522 L320 514 H310 Z" fill="#ffffff" />
+        <path d="M400 548 C434 566 452 602 458 644" fill="none" stroke="#bfdbfe" stroke-width="32" stroke-linecap="round" />
+        <circle cx="458" cy="646" r="20" fill="#efc3a5" />
+    </g>
+
+    <g filter="url(#shadow)">
+        <rect x="372" y="526" width="196" height="140" rx="20" fill="#0f172a" />
+        <rect x="384" y="538" width="172" height="116" rx="12" fill="#ffffff" />
+        <rect x="384" y="538" width="172" height="26" rx="12" fill="#2563eb" />
+        <rect x="402" y="578" width="58" height="8" rx="4" fill="#cbd5e1" />
+        <rect x="402" y="600" width="118" height="8" rx="4" fill="#e2e8f0" />
+        <rect x="402" y="622" width="90" height="8" rx="4" fill="#e2e8f0" />
+        <circle cx="528" cy="552" r="6" fill="#ffffff" opacity="0.85" />
+    </g>
+
+    <g filter="url(#softShadow)">
+        <rect x="606" y="392" width="150" height="100" rx="18" fill="#ffffff" />
+        <circle cx="640" cy="426" r="12" fill="#34d399" />
+        <rect x="662" y="419" width="68" height="10" rx="5" fill="#94a3b8" />
+        <rect x="626" y="454" width="104" height="9" rx="4.5" fill="#e2e8f0" />
+    </g>
+
+    <g opacity="0.55">
+        <circle cx="660" cy="180" r="8" fill="#93c5fd" />
+        <circle cx="690" cy="214" r="5" fill="#93c5fd" />
+        <circle cx="1070" cy="420" r="7" fill="#93c5fd" />
+    </g>
+</svg>
