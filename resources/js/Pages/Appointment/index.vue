@@ -3,202 +3,111 @@
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex justify-between items-center">
-                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">
-                    Gestión de citas
-                </h1>
-                <span
-                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                    <svg class="mr-1.5 h-2 w-2 text-green-500" fill="currentColor" viewBox="0 0 8 8">
-                        <circle cx="4" cy="4" r="3" />
-                    </svg>
-                    Sistema activo
-                </span>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800 dark:text-white">Gestión de citas</h1>
+                    <p class="text-sm text-slate-500">Citas registradas en el sistema, ordenadas por fecha.</p>
+                </div>
+                <Link :href="route('appointments.create')" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Nueva cita</Link>
             </div>
         </template>
 
-        <template #default>
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                <!-- Filtros y búsqueda -->
-                <div
-                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-6 border border-gray-200 dark:border-gray-700">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <div class="flex flex-col sm:flex-row gap-4 w-full">
-                            <LastDays v-model="filters.lastDays" @change="submit()" class="w-full sm:w-auto" />
-
-                            <div class="relative w-full sm:w-64">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" fill="currentColor"
-                                        viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd"
-                                            d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                                            clip-rule="evenodd"></path>
-                                    </svg>
-                                </div>
-                                <input @input="submit()" v-model="filters.search" id="table-search"
-                                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:ring-blue-500 focus:border-blue-500 dark:placeholder-gray-400 dark:text-white"
-                                    placeholder="Buscar citas...">
-                            </div>
-                        </div>
-
-                        <Link :href="route('appointments.create')"
-                            class="w-full sm:w-auto flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
-                            fill="currentColor">
-                            <path fill-rule="evenodd"
-                                d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                                clip-rule="evenodd" />
-                        </svg>
-                        Nueva cita
-                        </Link>
-                    </div>
-                </div>
-
-                <!-- Sin resultados -->
-                <div v-if="appointments.data.length === 0"
-                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-10 text-center">
-                    <p class="text-gray-600 dark:text-gray-300 font-medium">No se encontraron citas.</p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Prueba con otros filtros o crea una cita nueva.</p>
-                </div>
-
-                <!-- Listado de citas -->
-                <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <article v-for="appointment in appointments.data" :key="appointment.id"
-                        class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow">
-                        <div
-                            class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center gap-3">
-                            <div>
-                                <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Cita #{{
-                                    appointment.id }}</span>
-                                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mt-1">
-                                    {{ formatDate(appointment.date) }}
-                                </h3>
-                            </div>
-                            <span :class="statusClass(appointment)"
-                                class="px-2.5 py-1 text-xs font-semibold rounded-full whitespace-nowrap">
-                                {{ statusLabel(appointment) }}
-                            </span>
-                        </div>
-
-                        <div class="p-5">
-                            <div class="space-y-4">
-                                <div class="flex items-start">
-                                    <div
-                                        class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                            class="h-5 w-5 text-blue-600 dark:text-blue-300" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-4">
-                                        <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400">Paciente</h4>
-                                        <p class="text-sm font-semibold text-gray-800 dark:text-white">
-                                            {{ appointment.patient?.name }} {{ appointment.patient?.last_name }}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-start">
-                                    <div
-                                        class="flex-shrink-0 h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                            class="h-5 w-5 text-purple-600 dark:text-purple-300" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-4">
-                                        <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400">Médico</h4>
-                                        <p class="text-sm font-semibold text-gray-800 dark:text-white">
-                                            Dr. {{ appointment.doctor?.name }} {{ appointment.doctor?.last_name }}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-start">
-                                    <div
-                                        class="flex-shrink-0 h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                            class="h-5 w-5 text-amber-600 dark:text-amber-300" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-4">
-                                        <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400">Horario</h4>
-                                        <p class="text-sm font-semibold text-gray-800 dark:text-white">
-                                            {{ formatTime(appointment.starttime) }} - {{ formatTime(appointment.endtime) }}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div v-if="appointment.drug" class="flex items-start">
-                                    <div
-                                        class="flex-shrink-0 h-10 w-10 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                            class="h-5 w-5 text-teal-600 dark:text-teal-300" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M19.364 4.636a4 4 0 00-5.657 0L4.636 13.707a4 4 0 105.657 5.657l9.071-9.071a4 4 0 000-5.657zM9 9l6 6" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-4">
-                                        <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400">Medicamento</h4>
-                                        <p class="text-sm font-semibold text-gray-800 dark:text-white">
-                                            {{ appointment.drug.name }}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <p v-if="appointment.title" class="mt-4 text-sm text-gray-600 dark:text-gray-300 italic">
-                                {{ appointment.title }}
-                            </p>
-                        </div>
-
-                        <div
-                            class="px-5 py-3 bg-gray-50 dark:bg-gray-900/40 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
-                            <Link :href="route('appointments.show', appointment.id)"
-                                class="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white">
-                            Ver
-                            </Link>
-                            <Link :href="route('appointments.edit', appointment.id)"
-                                class="px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">
-                            Editar
-                            </Link>
-                            <button v-if="statusValue(appointment) !== 'cancelled'" type="button"
-                                @click="cancelAppointment(appointment)"
-                                class="px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200">
-                                Cancelar
-                            </button>
-                            <span v-else class="px-3 py-1.5 text-sm text-gray-400">Cancelada</span>
-                        </div>
-                    </article>
-                </div>
-
-                <Pagination :pagination="appointments" :filters="form" />
+        <section class="mb-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex flex-col gap-3 sm:flex-row">
+                <input
+                    v-model="filters.search"
+                    type="search"
+                    placeholder="Buscar por paciente, motivo o fecha"
+                    class="w-full rounded-lg border-slate-300 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                    @keyup.enter="applyFilters"
+                />
+                <select v-model="filters.lastDays" class="rounded-lg border-slate-300 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white" @change="applyFilters">
+                    <option value="7">Últimos 7 días</option>
+                    <option value="30">Últimos 30 días</option>
+                    <option value="month">Este mes</option>
+                    <option value="year">Este año</option>
+                    <option value="all">Todos</option>
+                </select>
+                <button type="button" class="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-slate-700" @click="applyFilters">Buscar</button>
             </div>
-        </template>
+        </section>
+
+        <section v-if="appointments.data.length" class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[900px] text-left text-sm">
+                    <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                        <tr>
+                            <th class="px-4 py-3">Cita</th>
+                            <th class="px-4 py-3">Paciente</th>
+                            <th class="px-4 py-3">Médico</th>
+                            <th class="px-4 py-3">Fecha y hora</th>
+                            <th class="px-4 py-3">Estado</th>
+                            <th class="px-4 py-3">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                        <tr v-for="appointment in appointments.data" :key="appointment.id" class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                            <td class="px-4 py-3">
+                                <Link :href="route('appointments.show', appointment.id)" class="font-semibold text-blue-600 hover:underline dark:text-blue-400">#{{ appointment.id }}</Link>
+                                <p class="text-xs text-slate-500">{{ appointment.session?.title ?? appointment.title }}</p>
+                            </td>
+                            <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ appointment.patient?.name }} {{ appointment.patient?.last_name }}</td>
+                            <td class="px-4 py-3 text-slate-700 dark:text-slate-200">Dr. {{ appointment.doctor?.name }} {{ appointment.doctor?.last_name }}</td>
+                            <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ formatDate(appointment.date) }} · {{ formatTime(appointment.starttime) }}–{{ formatTime(appointment.endtime) }}</td>
+                            <td class="px-4 py-3"><StatusBadge :status="appointment.status" /></td>
+                            <td class="px-4 py-3">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <select
+                                        v-model="statusDrafts[appointment.id]"
+                                        class="rounded-lg border-slate-300 text-xs dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                                        :disabled="isTerminal(appointment)"
+                                    >
+                                        <option value="">Cambiar estado…</option>
+                                        <option v-for="status in statuses" :key="status.value" :value="status.value">{{ status.label }}</option>
+                                    </select>
+                                    <button
+                                        v-if="statusDrafts[appointment.id]"
+                                        type="button"
+                                        class="rounded-lg bg-sky-600 px-2 py-1 text-xs font-semibold text-white hover:bg-sky-700"
+                                        @click="changeStatus(appointment)"
+                                    >Aplicar</button>
+                                    <Link :href="route('appointments.history', appointment.id)" class="text-xs font-semibold text-violet-600 hover:underline">Historial</Link>
+                                    <Link :href="route('appointments.edit', appointment.id)" class="text-xs font-semibold text-amber-600 hover:underline">Editar</Link>
+                                    <button
+                                        v-if="statusValue(appointment) !== 'cancelled'"
+                                        type="button"
+                                        class="text-xs font-semibold text-rose-600 hover:underline"
+                                        @click="cancelAppointment(appointment)"
+                                    >Cancelar</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <Pagination :pagination="appointments" :filters="activeFilters" />
+        </section>
+
+        <section v-else class="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <p class="font-medium text-slate-700 dark:text-slate-200">No hay citas para los filtros seleccionados.</p>
+            <Link :href="route('appointments.create')" class="mt-3 inline-block text-sm font-semibold text-blue-600 hover:underline">Registrar la primera cita</Link>
+        </section>
     </AuthenticatedLayout>
 </template>
 
 <script>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import LastDays from '@/Components/LastDays.vue';
 import Pagination from '@/Components/Pagination.vue';
+import StatusBadge from '@/Components/StatusBadge.vue';
 
 export default {
     components: {
-        Head,
         AuthenticatedLayout,
+        Head,
         Link,
-        LastDays,
         Pagination,
+        StatusBadge,
     },
     props: {
         appointments: {
@@ -216,66 +125,61 @@ export default {
     },
     data() {
         return {
-            form: {
-                search: this.filters.search || '',
-                lastDays: this.filters.lastDays || '30',
+            filtersForm: {
+                search: this.filters.search ?? '',
+                lastDays: this.filters.lastDays ?? '30',
             },
+            statusDrafts: {},
         };
     },
+    computed: {
+        activeFilters() {
+            return Object.fromEntries(
+                Object.entries(this.filtersForm).filter(([, value]) => value !== '' && value !== null)
+            );
+        },
+    },
     methods: {
-        submit() {
-            router.get(route('appointments.index'), this.form, {
+        applyFilters() {
+            router.get(route('appointments.index'), this.filtersForm, {
                 preserveState: true,
                 preserveScroll: true,
                 replace: true,
             });
         },
+        statusValue(appointment) {
+            const status = appointment.status;
+            return status && typeof status === 'object' ? status.value : status || 'pending';
+        },
+        isTerminal(appointment) {
+            return ['completed', 'cancelled', 'no_show'].includes(this.statusValue(appointment));
+        },
+        changeStatus(appointment) {
+            const status = this.statusDrafts[appointment.id];
+            if (!status) return;
+
+            router.post(route('appointments.status', appointment.id), {
+                status,
+                reason: 'Actualización desde el listado de citas.',
+            }, { preserveScroll: true, onSuccess: () => { this.statusDrafts[appointment.id] = ''; } });
+        },
+        cancelAppointment(appointment) {
+            if (!window.confirm(`¿Cancelar la cita #${appointment.id}? El espacio quedará disponible.`)) return;
+            router.delete(route('appointments.destroy', appointment.id), {
+                data: { reason: 'Cancelada desde el listado de citas.' },
+                preserveScroll: true,
+            });
+        },
         formatDate(dateString) {
-            if (!dateString) {
-                return '';
-            }
-
-            const date = new Date(`${dateString}T00:00:00`);
-            if (Number.isNaN(date.getTime())) {
-                return dateString;
-            }
-
+            if (!dateString) return '';
             return new Intl.DateTimeFormat('es-ES', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
-            }).format(date);
+            }).format(new Date(`${String(dateString).slice(0, 10)}T12:00:00`));
         },
         formatTime(time) {
-            return time ? time.substring(0, 5) : '';
-        },
-        statusValue(appointment) {
-            const status = appointment.status;
-
-            return status && typeof status === 'object' ? status.value : status || 'pending';
-        },
-        statusLabel(appointment) {
-            const value = this.statusValue(appointment);
-            const status = this.statuses.find((item) => item.value === value);
-
-            return status ? status.label : value;
-        },
-        statusClass(appointment) {
-            return {
-                'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200': this.statusValue(appointment) === 'pending',
-                'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': this.statusValue(appointment) === 'confirmed',
-                'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': this.statusValue(appointment) === 'completed',
-                'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': this.statusValue(appointment) === 'cancelled',
-            };
-        },
-        cancelAppointment(appointment) {
-            if (!window.confirm(`¿Cancelar la cita #${appointment.id}? La cita no se eliminará.`)) {
-                return;
-            }
-
-            router.delete(route('appointments.destroy', appointment.id), {
-                preserveScroll: true,
-            });
+            return time ? String(time).slice(0, 5) : '';
         },
     },
 };

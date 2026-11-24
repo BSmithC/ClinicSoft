@@ -131,11 +131,9 @@ export default {
     },    
     methods: {
         submit() {
-            console.log(this.form)  
             router.put(route('drugs.update',this.drugs), this.form.drugs, {
                 onError: (errors) => {
                     this.errors = errors
-                    console.log(errors)
                 }
             })
         }

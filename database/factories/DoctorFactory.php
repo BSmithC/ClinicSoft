@@ -2,22 +2,27 @@
 
 namespace Database\Factories;
 
+use App\Models\Doctor;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\DoctorModel>
+ * @extends Factory<Doctor>
  */
 class DoctorFactory extends Factory
 {
+    protected $model = Doctor::class;
+
     /**
-     * Define the model's default state.
-     *
      * @return array<string, mixed>
      */
     public function definition(): array
     {
         return [
-            //
+            'user_id' => User::factory(),
+            'license_number' => $this->faker->unique()->bothify('LIC-####-??'),
+            'bio' => $this->faker->sentence(),
+            'active' => true,
         ];
     }
 }

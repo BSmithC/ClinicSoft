@@ -75,7 +75,11 @@ class BillController extends Controller
         ]);
         $bill = $validated['form'];
         $created_bill = Bill::create($bill);
-        $created_bill->BillDetails()->createMany($validated['details']);
+        $details = array_map(
+            fn (array $detail) => $detail + ['patients_id' => $bill['patient_id']],
+            $validated['details']
+        );
+        $created_bill->BillDetails()->createMany($details);
         return redirect()->route('bills.index')->with('success', 'Factura creada correctamente.');
     }
 
@@ -113,7 +117,11 @@ class BillController extends Controller
         $bill->update($validated['form']);
 
         $bill->BillDetails()->delete();
-        $bill->BillDetails()->createMany($validated['details']);
+        $details = array_map(
+            fn (array $detail) => $detail + ['patients_id' => $validated['form']['patient_id']],
+            $validated['details']
+        );
+        $bill->BillDetails()->createMany($details);
         return redirect()->route('bills.index')->with('success', 'Factura actualizada correctamente.');
 }
 

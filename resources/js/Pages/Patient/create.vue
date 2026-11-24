@@ -1,206 +1,151 @@
 <template>
-    <Head title="Create Patients" />
+    <Head title="Nuevo paciente" />
+
     <AuthenticatedLayout>
         <template #header>
-            <div class="text-white text-lg font-semibold">
-                CREATE PATIENT
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800 dark:text-white">Nuevo paciente</h1>
+                <p class="text-sm text-slate-500">Los datos se validan en el servidor antes de guardarse.</p>
             </div>
         </template>
-        
-        <template #default>
-            <div class="rounded-lg bg-white py-8 px-6 md:px-12 lg:px-16 dark:bg-gray-900">
-                <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-                    <form @submit.prevent="submit" class="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-                        <div class="grid gap-6 mb-8 md:grid-cols-2 lg:grid-cols-3">
-                            <!-- Personal Information Column -->
-                            <div class="space-y-4">
-                                <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300 border-b pb-2">Personal Information</h3>
-                                
-                                <div>
-                                    <label for="dni" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">DNI</label>
-                                    <input type="Number" v-model="form.DNI" placeholder="000-0000000-0" required 
-                                        class="w-full p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-purple-500 dark:focus:border-purple-500 transition-colors" />
-                                </div>
-                                
-                                <div>
-                                    <label for="name" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">First Name</label>
-                                    <input v-model="form.name" type="text" id="name" placeholder="John" required 
-                                        class="w-full p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-purple-500 dark:focus:border-purple-500 transition-colors" />
-                                </div>
-                                
-                                <div>
-                                    <label for="sur_name" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">First Surname</label>
-                                    <input v-model="form.sur_name" type="text" id="sur_name" placeholder="Smith" required 
-                                        class="w-full p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-purple-500 dark:focus:border-purple-500 transition-colors" />
-                                </div>
-                                
-                                <div>
-                                    <label for="last_name" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Second Name</label>
-                                    <input v-model="form.last_name" type="text" id="last_name" placeholder="Doe" required 
-                                        class="w-full p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-purple-500 dark:focus:border-purple-500 transition-colors" />
-                                </div>
-                                
-                                <div>
-                                    <label for="second_sur_name" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Second Surname</label>
-                                    <input v-model="form.second_sur_name" type="text" id="second_sur_name" placeholder="Gonzalez" required 
-                                        class="w-full p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-purple-500 dark:focus:border-purple-500 transition-colors" />
-                                </div>
-                                
-                                <div>
-                                    <label for="date_of_birth" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Date of Birth</label>
-                                    <input v-model="form.date_of_birth" type="date" id="date_of_birth" required 
-                                        class="w-full p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-purple-500 dark:focus:border-purple-500 transition-colors" />
-                                </div>
-                            </div>
-                            
-                            <!-- Contact & Demographics Column -->
-                            <div class="space-y-4">
-                                <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300 border-b pb-2">Contact & Demographics</h3>
-                                
-                                <div>
-                                    <label for="phone_number" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
-                                    <input v-model="form.phone_number" type="text" id="phone_number" required 
-                                        class="w-full p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-purple-500 dark:focus:border-purple-500 transition-colors" />
-                                </div>
-                                
-                                <div>
-                                    <label for="email" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                                    <input v-model="form.email" type="email" id="email" placeholder="example@email.com" required 
-                                        class="w-full p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-purple-500 dark:focus:border-purple-500 transition-colors" />
-                                </div>
-                                
-                                <div>
-                                    <label for="address" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Address</label>
-                                    <input v-model="form.address" type="text" id="address" placeholder="Street 123, City" required 
-                                        class="w-full p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-purple-500 dark:focus:border-purple-500 transition-colors" />
-                                </div>
-                                
-                                <div>
-                                    <label for="nacionality" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Nationality</label>
-                                    <select v-model="form.nacionality" id="gender" required 
-                                        class="w-full p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-purple-500 dark:focus:border-purple-500 transition-colors">
-                                        <option>Dominican</option>
-                                        <option>American</option>
-                                        <option>Canadian</option>
-                                        <option>Mexican</option>
-                                        <option>Spanish</option>
-                                        <option>French</option>
-                                        <option>German</option>
-                                        <option>Italian</option>
-                                        <option>British</option>
-                                    </select>
-                                </div>
-                                
-                                <div>
-                                    <label for="gender" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Gender</label>
-                                    <select v-model="form.gender" id="gender" required 
-                                        class="w-full p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-purple-500 dark:focus:border-purple-500 transition-colors">
-                                        <option>Masculino</option>
-                                        <option>Femenino</option>
-                                        <option>No Binario</option>
-                                        <option>Otro</option>
-                                    </select>
-                                </div>
-                                
-                                <div>
-                                    <label for="sex" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Sex</label>
-                                    <select v-model="form.sex" id="sex" required 
-                                        class="w-full p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-purple-500 dark:focus:border-purple-500 transition-colors">
-                                        <option>Masculino</option>
-                                        <option>Femenino</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <!-- Medical & Other Information Column -->
-                            <div class="space-y-4">
-                                <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300 border-b pb-2">Medical & Other Information</h3>
-                                
-                                <div>
-                                    <label for="marital_status" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Marital Status</label>
-                                    <select v-model="form.marital_status" id="marital_status" required 
-                                        class="w-full p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-purple-500 dark:focus:border-purple-500 transition-colors">
-                                        <option>Soltero/a</option>
-                                        <option>Casado/a</option>
-                                        <option>Divorciado/a</option>
-                                    </select>
-                                </div>
-                                
-                                <div>
-                                    <label for="ocupation" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Occupation</label>
-                                    <input v-model="form.ocupation" type="text" id="ocupation" placeholder="Engineer" required 
-                                        class="w-full p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-purple-500 dark:focus:border-purple-500 transition-colors" />
-                                </div>
-                                
-                                <div>
-                                    <label for="place_of_birth" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Place of Birth</label>
-                                    <input v-model="form.place_of_birth" type="text" id="place_of_birth" placeholder="Santo Domingo" required 
-                                        class="w-full p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-purple-500 dark:focus:border-purple-500 transition-colors" />
-                                </div>
-                                
-                                <div>
-                                    <label for="blood_type" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Blood Type</label>
-                                    <select v-model="form.blood_type" id="blood_type" required 
-                                        class="w-full p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-purple-500 dark:focus:border-purple-500 transition-colors">
-                                        <option>A+</option>
-                                        <option>A-</option>
-                                        <option>B+</option>
-                                        <option>B-</option>
-                                        <option>AB+</option>
-                                        <option>AB-</option>
-                                        <option>O+</option>
-                                        <option>O-</option>
-                                    </select>
-                                </div>
-                                
-                                <div>
-                                    <label for="insurance" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Insurance</label>
-                                    <select v-model="form.insurance" id="insurance" required 
-                                        class="w-full p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-purple-500 dark:focus:border-purple-500 transition-colors">
-                                        <option>Universal</option>
-                                        <option>Humano</option>
-                                        <option>Palic</option>
-                                        <option>Mapfre Salud</option>
-                                        <option>SEMMA</option>
-                                        <option>Metromed</option>
-                                        <option>Futuro</option>
-                                        <option>SER</option>
-                                        <option>Ever</option>
-                                        <option>Salud Total</option>
-                                        <option>CIMA</option>
-                                        <option>Familiar</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Form Actions -->
-                        <div class="flex justify-end space-x-4 mt-8">
-                            <button type="button" @click="closeModal" 
-                                class="px-6 py-2.5 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:border-gray-700 dark:focus:ring-gray-700 transition-colors">
-                                Cancel
-                            </button>
-                            <button type="submit" 
-                                class="px-6 py-2.5 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:ring-4 focus:outline-none focus:ring-purple-300 dark:bg-purple-500 dark:hover:bg-purple-600 dark:focus:ring-purple-800 transition-colors">
-                                Save Patient
-                            </button>
-                        </div>
-                    </form>
+
+        <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <form @submit.prevent="submit" class="space-y-6">
+                <fieldset class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <legend class="mb-3 text-base font-semibold text-slate-800 dark:text-white">Identificación</legend>
+                    <div>
+                        <label for="DNI" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">DNI *</label>
+                        <input id="DNI" v-model="form.DNI" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                        <InputError :message="errors.DNI" class="mt-1" />
+                    </div>
+                    <div>
+                        <label for="name" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nombre *</label>
+                        <input id="name" v-model="form.name" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                        <InputError :message="errors.name" class="mt-1" />
+                    </div>
+                    <div>
+                        <label for="sur_name" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Primer apellido *</label>
+                        <input id="sur_name" v-model="form.sur_name" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                        <InputError :message="errors.sur_name" class="mt-1" />
+                    </div>
+                    <div>
+                        <label for="last_name" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Segundo apellido *</label>
+                        <input id="last_name" v-model="form.last_name" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                        <InputError :message="errors.last_name" class="mt-1" />
+                    </div>
+                    <div>
+                        <label for="second_sur_name" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Apellido adicional</label>
+                        <input id="second_sur_name" v-model="form.second_sur_name" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                    </div>
+                    <div>
+                        <label for="date_of_birth" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Fecha de nacimiento *</label>
+                        <input id="date_of_birth" v-model="form.date_of_birth" type="date" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                        <InputError :message="errors.date_of_birth" class="mt-1" />
+                    </div>
+                    <div>
+                        <label for="place_of_birth" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Lugar de nacimiento *</label>
+                        <input id="place_of_birth" v-model="form.place_of_birth" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                        <InputError :message="errors.place_of_birth" class="mt-1" />
+                    </div>
+                </fieldset>
+
+                <fieldset class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <legend class="mb-3 text-base font-semibold text-slate-800 dark:text-white">Contacto y demografía</legend>
+                    <div>
+                        <label for="email" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Correo *</label>
+                        <input id="email" v-model="form.email" type="email" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                        <InputError :message="errors.email" class="mt-1" />
+                    </div>
+                    <div>
+                        <label for="phone_number" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Teléfono</label>
+                        <input id="phone_number" v-model="form.phone_number" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                        <InputError :message="errors.phone_number" class="mt-1" />
+                    </div>
+                    <div>
+                        <label for="address" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Dirección</label>
+                        <input id="address" v-model="form.address" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                    </div>
+                    <div>
+                        <label for="nacionality" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nacionalidad</label>
+                        <input id="nacionality" v-model="form.nacionality" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                    </div>
+                    <div>
+                        <label for="gender" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Género *</label>
+                        <select id="gender" v-model="form.gender" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                            <option disabled value="">Seleccione</option>
+                            <option v-for="option in genderOptions" :key="option" :value="option">{{ option }}</option>
+                        </select>
+                        <InputError :message="errors.gender" class="mt-1" />
+                    </div>
+                    <div>
+                        <label for="sex" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Sexo *</label>
+                        <select id="sex" v-model="form.sex" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                            <option disabled value="">Seleccione</option>
+                            <option v-for="option in sexOptions" :key="option" :value="option">{{ option }}</option>
+                        </select>
+                        <InputError :message="errors.sex" class="mt-1" />
+                    </div>
+                    <div>
+                        <label for="marital_status" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Estado civil *</label>
+                        <select id="marital_status" v-model="form.marital_status" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                            <option disabled value="">Seleccione</option>
+                            <option v-for="option in maritalStatusOptions" :key="option" :value="option">{{ option }}</option>
+                        </select>
+                        <InputError :message="errors.marital_status" class="mt-1" />
+                    </div>
+                    <div>
+                        <label for="ocupation" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Ocupación</label>
+                        <input id="ocupation" v-model="form.ocupation" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                    </div>
+                </fieldset>
+
+                <fieldset class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <legend class="mb-3 text-base font-semibold text-slate-800 dark:text-white">Información clínica</legend>
+                    <div>
+                        <label for="blood_type" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Tipo de sangre</label>
+                        <select id="blood_type" v-model="form.blood_type" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                            <option value="">Sin especificar</option>
+                            <option v-for="option in bloodTypeOptions" :key="option" :value="option">{{ option }}</option>
+                        </select>
+                        <InputError :message="errors.blood_type" class="mt-1" />
+                    </div>
+                    <div>
+                        <label for="insurance" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Seguro</label>
+                        <input id="insurance" v-model="form.insurance" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                    </div>
+                    <label class="flex items-center gap-2 self-end pb-2 text-sm text-slate-700 dark:text-slate-200">
+                        <input v-model="form.status" type="checkbox" class="rounded border-slate-300" />
+                        Paciente activo
+                    </label>
+                </fieldset>
+
+                <div class="flex flex-wrap justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-700">
+                    <Link :href="route('patients.index')" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 dark:border-slate-600 dark:text-slate-200">Cancelar</Link>
+                    <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Guardar paciente</button>
                 </div>
-            </div>
-        </template>
+            </form>
+        </section>
     </AuthenticatedLayout>
 </template>
+
 <script>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
-import { router } from '@inertiajs/vue3';
-import LastDays from '@/Components/LastDays.vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import InputError from '@/Components/InputError.vue';
 
 export default {
+    components: {
+        AuthenticatedLayout,
+        Head,
+        Link,
+        InputError,
+    },
     data() {
         return {
+            genderOptions: ['Masculino', 'Femenino', 'No Binario', 'Otro'],
+            sexOptions: ['Masculino', 'Femenino'],
+            maritalStatusOptions: ['Soltero/a', 'Casado/a', 'Divorciado/a', 'Viudo/a', 'Unión libre'],
+            bloodTypeOptions: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
             form: {
                 DNI: '',
                 name: '',
@@ -219,29 +164,21 @@ export default {
                 blood_type: '',
                 insurance: '',
                 status: true,
-                email: ''
+                email: '',
             },
-            errors: {}
         };
+    },
+    computed: {
+        errors() {
+            return this.$page.props.errors ?? {};
+        },
     },
     methods: {
         submit() {
-            console.log(this.form)
             router.post(route('patients.store'), this.form, {
-                onError: (errors) => {
-                    this.errors = errors
-                    toast.error('¡Error No Se Creado Paciente!')
-                    console.log(errors)
-                },
-            })
+                preserveScroll: true,
+            });
         },
     },
-    components: {
-    Head,
-    AuthenticatedLayout,
-    LastDays,
-    Link,
-    ref 
-    }
 };
 </script>

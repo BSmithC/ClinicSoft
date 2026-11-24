@@ -48,7 +48,7 @@ class AppointmentAvailabilityService
 
         $conflict = Appointment::query()
             ->active()
-            ->notCancelled()
+            ->notTerminal()
             ->forDoctor($doctorId)
             ->onDate($date)
             ->overlapping($start, $end)

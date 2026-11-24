@@ -1,144 +1,182 @@
 <template>
-    <Head title="Edit Patients" />
+    <Head title="Editar paciente" />
+
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-white dark:text-gray-200">EDIT PACIENTE</h2>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-white">Editar paciente #{{ patients.id }}</h1>
         </template>
-        <template #default>
-            <div class=" py-12 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-                <div class="w-full max-w-3xl">
-                    <!-- Tarjeta del formulario -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden transition-all duration-300 transform hover:shadow-2xl">
-                        <!-- Encabezado con gradiente -->
-                        <div class="bg-gradient-to-r from-purple-600 to-blue-500 p-6 text-white">
-                            <h3 class="text-xl font-semibold flex items-center gap-6">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                                Información del Paciente
-                            </h3>
-                        </div>
-                        <!-- Formulario -->
-                        <form @submit.prevent="submit" class="p-6 space-y-6">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- Columna Izquierda -->
-                                <div class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
-                                        <input v-model="patients.name" 
-                                            class="w-full px-4 py-2 text-gray-700 bg-gray-50 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-all duration-200"
-                                            placeholder="Ej: Juan">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Apellido</label>
-                                        <input v-model="patients.last_name" 
-                                            class="w-full px-4 py-2 text-gray-700 bg-gray-50 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-all duration-200"
-                                            placeholder="Ej: Pérez">
-                                    </div>
-                                </div>
-                                <!-- Columna Derecha -->
-                                <div class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha de Nacimiento</label>
-                                        <input v-model="patients.date_of_birth" type="date" 
-                                            class="w-full px-4 py-2 text-gray-700 bg-gray-50 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-all duration-200">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Seguro Médico (ARS)</label>
-                                        <select v-model="patients.insurance" 
-                                            class="w-full px-4 py-2 text-gray-700 bg-gray-50 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-all duration-200">
-                                            <option value="Universal">Universal</option>
-                                            <option value="Humano">Humano</option>
-                                            <option value="Palic">Palic</option>
-                                            <option value="Mapfre Salud">Mapfre Salud</option>
-                                            <option value="SEMMA">SEMMA</option>
-                                            <option value="Metromed">Metromed</option>
-                                            <option value="Futuro">Futuro</option>
-                                            <option value="SER">SER</option>
-                                            <option value="Ever">Ever</option>
-                                            <option value="Salud Total">Salud Total</option>
-                                            <option value="CIMA">CIMA</option>
-                                            <option value="Familiar">Familiar</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Estado -->
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado</label>
-                                <div class="flex items-center space-x-4">
-                                    <label class="inline-flex items-center">
-                                        <input type="radio" v-model="patients.status" :value="true" 
-                                            class="form-radio h-5 w-5 text-purple-600 transition duration-150 ease-in-out">
-                                        <span class="ml-2 text-gray-700 dark:text-gray-300">Activo</span>
-                                    </label>
-                                    <label class="inline-flex items-center">
-                                        <input type="radio" v-model="patients.status" :value="false" 
-                                            class="form-radio h-5 w-5 text-purple-600 transition duration-150 ease-in-out">
-                                        <span class="ml-2 text-gray-700 dark:text-gray-300">Inactivo</span>
-                                    </label>
-                                </div>
-                            </div>
-                            <!-- Botones -->
-                            <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                <button type="button" @click="closeModal" 
-                                    class="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600 transition-all duration-200">
-                                    Cancelar
-                                </button>
-                                <button type="submit" 
-                                    class="px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg hover:from-purple-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-purple-300 shadow-md transition-all duration-200 transform hover:scale-105">
-                                    <div class="flex items-center gap-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                        </svg>
-                                        Guardar Cambios
-                                    </div>
-                                </button>
-                            </div>
-                        </form>
+
+        <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <form @submit.prevent="submit" class="space-y-6">
+                <fieldset class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <legend class="mb-3 text-base font-semibold text-slate-800 dark:text-white">Identificación</legend>
+                    <div>
+                        <label for="DNI" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">DNI *</label>
+                        <input id="DNI" v-model="form.DNI" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                        <InputError :message="errors.DNI" class="mt-1" />
                     </div>
+                    <div>
+                        <label for="name" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nombre *</label>
+                        <input id="name" v-model="form.name" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                        <InputError :message="errors.name" class="mt-1" />
+                    </div>
+                    <div>
+                        <label for="sur_name" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Primer apellido *</label>
+                        <input id="sur_name" v-model="form.sur_name" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                        <InputError :message="errors.sur_name" class="mt-1" />
+                    </div>
+                    <div>
+                        <label for="last_name" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Segundo apellido *</label>
+                        <input id="last_name" v-model="form.last_name" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                        <InputError :message="errors.last_name" class="mt-1" />
+                    </div>
+                    <div>
+                        <label for="second_sur_name" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Apellido adicional</label>
+                        <input id="second_sur_name" v-model="form.second_sur_name" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                    </div>
+                    <div>
+                        <label for="date_of_birth" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Fecha de nacimiento *</label>
+                        <input id="date_of_birth" v-model="form.date_of_birth" type="date" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                        <InputError :message="errors.date_of_birth" class="mt-1" />
+                    </div>
+                    <div>
+                        <label for="place_of_birth" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Lugar de nacimiento *</label>
+                        <input id="place_of_birth" v-model="form.place_of_birth" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                        <InputError :message="errors.place_of_birth" class="mt-1" />
+                    </div>
+                </fieldset>
+
+                <fieldset class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <legend class="mb-3 text-base font-semibold text-slate-800 dark:text-white">Contacto y demografía</legend>
+                    <div>
+                        <label for="email" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Correo *</label>
+                        <input id="email" v-model="form.email" type="email" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                        <InputError :message="errors.email" class="mt-1" />
+                    </div>
+                    <div>
+                        <label for="phone_number" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Teléfono</label>
+                        <input id="phone_number" v-model="form.phone_number" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                    </div>
+                    <div>
+                        <label for="address" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Dirección</label>
+                        <input id="address" v-model="form.address" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                    </div>
+                    <div>
+                        <label for="nacionality" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nacionalidad</label>
+                        <input id="nacionality" v-model="form.nacionality" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                    </div>
+                    <div>
+                        <label for="gender" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Género *</label>
+                        <select id="gender" v-model="form.gender" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                            <option v-for="option in genderOptions" :key="option" :value="option">{{ option }}</option>
+                        </select>
+                        <InputError :message="errors.gender" class="mt-1" />
+                    </div>
+                    <div>
+                        <label for="sex" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Sexo *</label>
+                        <select id="sex" v-model="form.sex" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                            <option v-for="option in sexOptions" :key="option" :value="option">{{ option }}</option>
+                        </select>
+                        <InputError :message="errors.sex" class="mt-1" />
+                    </div>
+                    <div>
+                        <label for="marital_status" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Estado civil *</label>
+                        <select id="marital_status" v-model="form.marital_status" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                            <option v-for="option in maritalStatusOptions" :key="option" :value="option">{{ option }}</option>
+                        </select>
+                        <InputError :message="errors.marital_status" class="mt-1" />
+                    </div>
+                    <div>
+                        <label for="ocupation" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Ocupación</label>
+                        <input id="ocupation" v-model="form.ocupation" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                    </div>
+                </fieldset>
+
+                <fieldset class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <legend class="mb-3 text-base font-semibold text-slate-800 dark:text-white">Información clínica</legend>
+                    <div>
+                        <label for="blood_type" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Tipo de sangre</label>
+                        <select id="blood_type" v-model="form.blood_type" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                            <option value="">Sin especificar</option>
+                            <option v-for="option in bloodTypeOptions" :key="option" :value="option">{{ option }}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="insurance" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Seguro</label>
+                        <input id="insurance" v-model="form.insurance" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                    </div>
+                    <label class="flex items-center gap-2 self-end pb-2 text-sm text-slate-700 dark:text-slate-200">
+                        <input v-model="form.status" type="checkbox" class="rounded border-slate-300" />
+                        Paciente activo
+                    </label>
+                </fieldset>
+
+                <div class="flex flex-wrap justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-700">
+                    <Link :href="route('patients.show', patients.id)" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 dark:border-slate-600 dark:text-slate-200">Cancelar</Link>
+                    <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Guardar cambios</button>
                 </div>
-            </div>
-        </template>
+            </form>
+        </section>
     </AuthenticatedLayout>
 </template>
+
 <script>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
-import { router } from '@inertiajs/vue3';
-import LastDays from '@/Components/LastDays.vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import InputError from '@/Components/InputError.vue';
 
 export default {
+    components: {
+        AuthenticatedLayout,
+        Head,
+        Link,
+        InputError,
+    },
     props: {
-    patients: Object,
+        patients: {
+            type: Object,
+            required: true,
+        },
     },
     data() {
         return {
-            form: {patients: this.patients},
-            errors: {}
+            genderOptions: ['Masculino', 'Femenino', 'No Binario', 'Otro'],
+            sexOptions: ['Masculino', 'Femenino'],
+            maritalStatusOptions: ['Soltero/a', 'Casado/a', 'Divorciado/a', 'Viudo/a', 'Unión libre'],
+            bloodTypeOptions: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
+            form: {
+                DNI: this.patients.DNI ?? '',
+                name: this.patients.name ?? '',
+                sur_name: this.patients.sur_name ?? '',
+                last_name: this.patients.last_name ?? '',
+                second_sur_name: this.patients.second_sur_name ?? '',
+                date_of_birth: String(this.patients.date_of_birth ?? '').slice(0, 10),
+                phone_number: this.patients.phone_number ?? '',
+                nacionality: this.patients.nacionality ?? '',
+                address: this.patients.address ?? '',
+                gender: this.patients.gender ?? '',
+                sex: this.patients.sex ?? '',
+                marital_status: this.patients.marital_status ?? '',
+                ocupation: this.patients.ocupation ?? '',
+                place_of_birth: this.patients.place_of_birth ?? '',
+                blood_type: this.patients.blood_type ?? '',
+                insurance: this.patients.insurance ?? '',
+                status: Boolean(this.patients.status),
+                email: this.patients.email ?? '',
+            },
         };
-    },    
+    },
+    computed: {
+        errors() {
+            return this.$page.props.errors ?? {};
+        },
+    },
     methods: {
         submit() {
-            console.log(this.form)
-            router.put(route('patients.update',this.patients), this.form.patients, {
-                onSuccess: (success) => {
-                    this.success = success
-                    console.log(success)
-                },
-                onError: (errors) => {
-                    this.errors = errors
-                    console.log(errors)
-                }
-            })
-        }
+            router.put(route('patients.update', this.patients.id), this.form, {
+                preserveScroll: true,
+            });
+        },
     },
-    components: {
-    Head,
-    AuthenticatedLayout,
-    LastDays,
-    Link
-    }
 };
-</script>.
+</script>

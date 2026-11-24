@@ -290,17 +290,12 @@ export default {
                 },
                 details: this.table_bill
             };
-            console.log(data);
             router.post(route('bills.update', this.editbills.id), data, {
-                onSuccess: (success) => {
-                    this.success = success;
-                    // toast.success('¡Guardado con éxito!');
-                    console.log(success);
+                onSuccess: () => {
+                    this.success = true;
                 },
                 onError: (errors) => {
                     this.errors = errors;
-                    // toast.error('¡Error No Se Creado Paciente!');
-                    console.log(errors);
                 }
             });
         }

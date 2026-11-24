@@ -163,11 +163,9 @@ export default {
     },
     methods: {
         submit() {
-            console.log(this.form)
             router.post(route('drugs.store'), this.form, {
                 onError: (errors) => {
                     this.errors = errors
-                    console.log(errors)
                 }
             })
         }

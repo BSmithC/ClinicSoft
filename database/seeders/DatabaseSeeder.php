@@ -12,19 +12,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-
         \App\Models\Patient::factory(100)->create();
-        // $this->call(PatientSeeder::class);
-
         \App\Models\Drug::factory(100)->create();
-        // $this->call(DrugSeeder::class);
-        
         \App\Models\Bill::factory(100)->create();
-
         \App\Models\BillDetail::factory(100)->create();
-        
         \App\Models\User::factory(100)->create();
-
         \App\Models\Appointment::factory(100)->create();
 
         \App\Models\User::factory()->create([
@@ -34,5 +26,6 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(RoleSeeder::class);
+        $this->call(ClinicalSeeder::class);
     }
 }

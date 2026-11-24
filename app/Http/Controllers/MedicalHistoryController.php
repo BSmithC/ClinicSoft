@@ -57,6 +57,8 @@ class MedicalHistoryController extends Controller
 
     public function show(MedicalHistory $medicalhistory)
     {
+        $medicalhistory->load('doctor', 'patient', 'drug');
+
         return Inertia::render('MedicalHistory/show', ['medicalhistories' => $medicalhistory]);
     }
 

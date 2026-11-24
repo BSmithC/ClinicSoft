@@ -3,17 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Enums\AppointmentStatus;
+use App\Http\Requests\CancelAppointmentRequest;
+use App\Http\Requests\ChangeAppointmentStatusRequest;
+use App\Http\Requests\StoreAppointmentRequest;
+use App\Http\Requests\UpdateAppointmentRequest;
 use App\Models\Appointment;
 use App\Models\Drug;
+use App\Models\MedicalSession;
 use App\Models\Patient;
+use App\Models\Specialty;
 use App\Models\User;
-use App\Services\AppointmentAvailabilityService;
+use App\Services\AppointmentBookingService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class AppointmentController extends Controller
@@ -26,32 +30,36 @@ class AppointmentController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
-        $query = Appointment::query()->select('appointments.*');
         $lastDays = $request->input('lastDays', '30');
+        $query = Appointment::query()->select('appointments.*');
+        $this->scopeToDoctor($query);
 
         if ($search) {
             $query->where(function (Builder $q) use ($search) {
-                $q->whereRaw('appointments.title LIKE ?', ['%' . $search . '%'])
-                    ->orWhereRaw('appointments.doctor_id LIKE ?', ['%' . $search . '%'])
-                    ->orWhereRaw('appointments.patient_id LIKE ?', ['%' . $search . '%'])
-                    ->orWhereRaw('appointments.date LIKE ?', ['%' . $search . '%'])
-                    ->orWhereRaw('appointments.attended LIKE ?', ['%' . $search . '%']);
+                $q->where('appointments.title', 'like', "%{$search}%")
+                    ->orWhere('appointments.date', 'like', "%{$search}%")
+                    ->orWhereHas('patient', fn (Builder $patient) => $patient
+                        ->where('name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%"));
             });
         }
 
         if ($lastDays && $lastDays !== 'all') {
             if (is_numeric($lastDays)) {
-                $dateFrom = Carbon::now()->subDays((int) $lastDays)->startOfDay();
-                $query->where('created_at', '>=', $dateFrom);
+                $query->where('appointments.created_at', '>=', Carbon::now()->subDays((int) $lastDays)->startOfDay());
             } elseif ($lastDays === 'month') {
-                $query->where('created_at', '>=', Carbon::now()->startOfMonth());
+                $query->where('appointments.created_at', '>=', Carbon::now()->startOfMonth());
             } elseif ($lastDays === 'year') {
-                $query->where('created_at', '>=', Carbon::now()->startOfYear());
+                $query->where('appointments.created_at', '>=', Carbon::now()->startOfYear());
             }
         }
 
         return Inertia::render('Appointment/index', [
-            'appointments' => $query->with('patient', 'doctor', 'drug')->paginate(10),
+            'appointments' => $query->with('patient', 'doctor', 'drug', 'session', 'specialty')
+                ->orderByDesc('date')
+                ->orderBy('starttime')
+                ->paginate(10)
+                ->withQueryString(),
             'filters' => ['search' => $search, 'lastDays' => $lastDays],
             'statuses' => AppointmentStatus::options(),
         ]);
@@ -59,55 +67,44 @@ class AppointmentController extends Controller
 
     public function create()
     {
+        $doctorQuery = User::query()->whereHas('roles', fn (Builder $q) => $q->where('name', 'doctor'));
+
+        if (! Auth::user()->isAdmin()) {
+            $doctorQuery->whereKey(Auth::id());
+        }
+
         return Inertia::render('Appointment/create', [
             'patients' => Patient::query()->get(['id', 'name', 'last_name']),
-            'doctors' => User::query()->get(['id', 'name', 'last_name']),
+            'doctors' => $doctorQuery->get(['id', 'name', 'last_name']),
+            'doctorProfiles' => \App\Models\Doctor::query()->with('user:id,name,last_name')->get(),
+            'specialties' => Specialty::query()->active()->get(['id', 'name', 'slug']),
+            'sessions' => $this->sessionsForCurrentUser(),
             'drugs' => Drug::query()->get(['id', 'name']),
             'statuses' => AppointmentStatus::options(),
             'availability' => config('appointments'),
         ]);
     }
 
-    public function store(Request $request, AppointmentAvailabilityService $availability)
+    public function store(StoreAppointmentRequest $request, AppointmentBookingService $booking)
     {
-        $validated = $this->validateAppointment($request);
+        $data = $request->validated();
+        $this->enforceDoctorScope($data);
 
-        $errors = $availability->validate(
-            (int) $validated['doctor_id'],
-            $validated['date'],
-            $validated['starttime'],
-            $validated['endtime'],
-        );
+        $appointment = $booking->book($data);
 
-        if ($errors !== []) {
-            throw ValidationException::withMessages(['starttime' => $errors]);
-        }
-
-        $status = isset($validated['status'])
-            ? AppointmentStatus::from($validated['status'])
-            : AppointmentStatus::Pending;
-
-        DB::transaction(fn () => Appointment::create([
-            'title' => $validated['title'],
-            'doctor_id' => $validated['doctor_id'],
-            'patient_id' => $validated['patient_id'],
-            'drug_id' => $validated['drug_id'] ?? null,
-            'status' => $status,
-            'attended' => ($validated['attended'] ?? false) || $status === AppointmentStatus::Completed,
-            'date' => $validated['date'],
-            'starttime' => $validated['starttime'],
-            'endtime' => $validated['endtime'],
-            'active' => $validated['active'] ?? true,
-        ]));
-
-        return redirect()->route('appointments.index')->with('success', 'Appointment created successfully.');
+        return redirect()->route('appointments.index')
+            ->with('success', "Cita #{$appointment->id} creada correctamente.");
     }
 
     public function show(Appointment $appointment)
     {
         return Inertia::render('Appointment/show', [
-            'appointment' => $appointment->loadMissing('patient', 'doctor', 'drug'),
+            'appointment' => $appointment->loadMissing('patient', 'doctor', 'drug', 'session.specialty', 'specialty', 'histories.actor'),
             'statuses' => AppointmentStatus::options(),
+            'transitions' => array_map(
+                fn (AppointmentStatus $status) => ['value' => $status->value, 'label' => $status->label()],
+                $appointment->status->allowedTransitions()
+            ),
         ]);
     }
 
@@ -116,81 +113,116 @@ class AppointmentController extends Controller
         return Inertia::render('Appointment/edit', [
             'appointments' => $appointment,
             'patients' => Patient::query()->get(['id', 'name', 'last_name']),
-            'doctors' => User::query()->get(['id', 'name', 'last_name']),
+            'doctors' => User::query()->whereHas('roles', fn (Builder $q) => $q->where('name', 'doctor'))
+                ->get(['id', 'name', 'last_name']),
+            'specialties' => Specialty::query()->active()->get(['id', 'name', 'slug']),
+            'sessions' => $this->sessionsForCurrentUser(),
             'drugs' => Drug::query()->get(['id', 'name']),
             'statuses' => AppointmentStatus::options(),
+            'transitions' => array_map(
+                fn (AppointmentStatus $status) => ['value' => $status->value, 'label' => $status->label()],
+                $appointment->status->allowedTransitions()
+            ),
             'availability' => config('appointments'),
         ]);
     }
 
-    public function update(Request $request, Appointment $appointment, AppointmentAvailabilityService $availability)
-    {
-        $validated = $this->validateAppointment($request);
+    public function update(
+        UpdateAppointmentRequest $request,
+        Appointment $appointment,
+        AppointmentBookingService $booking
+    ) {
+        $data = $request->validated();
+        $this->enforceDoctorScope($data);
 
-        $errors = $availability->validate(
-            (int) $validated['doctor_id'],
-            $validated['date'],
-            $validated['starttime'],
-            $validated['endtime'],
-            $appointment->id,
-        );
+        if (isset($data['status'])) {
+            $status = AppointmentStatus::from($data['status']);
 
-        if ($errors !== []) {
-            throw ValidationException::withMessages(['starttime' => $errors]);
+            if ($status !== $appointment->status) {
+                if ($status === AppointmentStatus::Cancelled) {
+                    $booking->cancel($appointment, $data['reason'] ?? null);
+                } else {
+                    $booking->changeStatus($appointment, $status, $data['reason'] ?? null);
+                }
+            }
+
+            unset($data['status']);
         }
 
-        $status = isset($validated['status'])
-            ? AppointmentStatus::from($validated['status'])
-            : $appointment->status;
+        $booking->reschedule($appointment->fresh(), $data);
 
-        DB::transaction(fn () => $appointment->update([
-            'title' => $validated['title'],
-            'doctor_id' => $validated['doctor_id'],
-            'patient_id' => $validated['patient_id'],
-            'drug_id' => $validated['drug_id'] ?? null,
-            'status' => $status,
-            'attended' => ($validated['attended'] ?? false) || $status === AppointmentStatus::Completed,
-            'date' => $validated['date'],
-            'starttime' => $validated['starttime'],
-            'endtime' => $validated['endtime'],
-            'active' => $validated['active'] ?? true,
-        ]));
-
-        return redirect()->route('appointments.index')->with('success', 'Appointment updated successfully.');
+        return redirect()->route('appointments.index')->with('success', 'Cita actualizada correctamente.');
     }
 
-    public function destroy(Appointment $appointment)
-    {
-        $appointment->update([
-            'status' => AppointmentStatus::Cancelled,
-            'active' => false,
-        ]);
+    public function changeStatus(
+        ChangeAppointmentStatusRequest $request,
+        Appointment $appointment,
+        AppointmentBookingService $booking
+    ) {
+        $this->authorize('update', $appointment);
 
-        return redirect()->route('appointments.index')->with('success', 'Appointment cancelled successfully.');
+        $status = AppointmentStatus::from($request->validated('status'));
+
+        if ($status === AppointmentStatus::Cancelled) {
+            $booking->cancel($appointment, $request->validated('reason'));
+        } else {
+            $booking->changeStatus($appointment, $status, $request->validated('reason'));
+        }
+
+        return back()->with('success', 'Estado de la cita actualizado.');
+    }
+
+    public function destroy(
+        CancelAppointmentRequest $request,
+        Appointment $appointment,
+        AppointmentBookingService $booking
+    ) {
+        $booking->cancel($appointment, $request->validated('reason'));
+
+        return redirect()->route('appointments.index')->with('success', 'Cita cancelada. El espacio fue liberado.');
+    }
+
+    public function history(Appointment $appointment)
+    {
+        $this->authorize('view', $appointment);
+
+        return Inertia::render('Appointment/history', [
+            'appointment' => $appointment->loadMissing('patient:id,name,last_name', 'doctor:id,name,last_name'),
+            'histories' => $appointment->histories()->with('actor:id,name')->get(),
+        ]);
     }
 
     /**
-     * @return array<string, mixed>
+     * @param  \Illuminate\Database\Eloquent\Builder<Appointment>  $query
      */
-    private function validateAppointment(Request $request): array
+    private function scopeToDoctor(Builder $query): void
     {
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'doctor_id' => ['required', 'exists:users,id'],
-            'patient_id' => ['required', 'exists:patients,id'],
-            'drug_id' => ['nullable', 'exists:drugs,id'],
-            'status' => ['sometimes', Rule::enum(AppointmentStatus::class)],
-            'attended' => ['sometimes', 'boolean'],
-            'active' => ['sometimes', 'boolean'],
-            'date' => ['required', 'date_format:Y-m-d'],
-            'starttime' => ['required', 'date_format:H:i', 'before:endtime'],
-            'endtime' => ['required', 'date_format:H:i', 'after:starttime'],
-        ]);
+        if (! Auth::user()->isAdmin()) {
+            $query->where('doctor_id', Auth::id());
+        }
+    }
 
-        // Store times in a single comparable format (H:i:s).
-        $validated['starttime'] .= ':00';
-        $validated['endtime'] .= ':00';
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function enforceDoctorScope(array &$data): void
+    {
+        if (! Auth::user()->isAdmin()) {
+            $data['doctor_id'] = Auth::id();
+        }
+    }
 
-        return $validated;
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection<int, MedicalSession>
+     */
+    private function sessionsForCurrentUser()
+    {
+        $query = MedicalSession::query()->with('specialty:id,name')->orderByDesc('date');
+
+        if (! Auth::user()->isAdmin()) {
+            $query->where('doctor_id', Auth::id());
+        }
+
+        return $query->limit(100)->get();
     }
 }

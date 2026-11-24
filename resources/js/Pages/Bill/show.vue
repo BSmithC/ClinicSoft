@@ -185,10 +185,6 @@
                                                         class="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                                         Price
                                                     </th>
-                                                    <th scope="col"
-                                                        class="px-6 py-3 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                                                        Actions
-                                                    </th>
                                                 </tr>
                                             </thead>
                                             <tbody
@@ -206,13 +202,6 @@
                                                     <td
                                                         class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                                                         {{ detail.price ? `$${detail.price}` : 'Not specified' }}
-                                                    </td>
-                                                    <td
-                                                        class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                        <Link href="#"
-                                                            class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">
-                                                        Edit
-                                                        </Link>
                                                     </td>
                                                 </tr>
                                             </tbody>

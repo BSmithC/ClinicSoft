@@ -2,10 +2,14 @@
 
 namespace App\Providers;
 
+use App\Events\AppointmentBooked;
+use App\Events\AppointmentCancelled;
+use App\Events\AppointmentStatusChanged;
+use App\Events\MedicalSessionCancelled;
+use App\Listeners\RecordClinicalActivity;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Event;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -18,6 +22,10 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
+        AppointmentBooked::class => [RecordClinicalActivity::class],
+        AppointmentCancelled::class => [RecordClinicalActivity::class],
+        AppointmentStatusChanged::class => [RecordClinicalActivity::class],
+        MedicalSessionCancelled::class => [RecordClinicalActivity::class],
     ];
 
     /**

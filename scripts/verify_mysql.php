@@ -37,15 +37,37 @@ $fks = DB::select("
 ", [$db]);
 $names = array_map(fn ($fk) => $fk->COLUMN_NAME.'->'.$fk->REFERENCED_TABLE_NAME, $fks);
 sort($names);
-check($names === ['doctor_id->users', 'drug_id->drugs', 'patient_id->patients'], 'FK de appointments: '.implode(', ', $names));
+$expectedFks = [
+    'doctor_id->users',
+    'drug_id->drugs',
+    'patient_id->patients',
+    'rescheduled_from_id->appointments',
+    'session_id->medical_sessions',
+    'specialty_id->specialties',
+];
+sort($expectedFks);
+check($names === $expectedFks, 'FK de appointments: '.implode(', ', $names));
 
 $indexes = array_map(fn ($row) => $row->Key_name, DB::select('SHOW INDEX FROM appointments'));
-foreach (['appointments_doctor_date_index', 'appointments_patient_id_index', 'appointments_status_index', 'appointments_date_index', 'appointments_doctor_date_start_active_unique'] as $index) {
+foreach ([
+    'appointments_doctor_date_index',
+    'appointments_patient_id_index',
+    'appointments_status_index',
+    'appointments_date_index',
+    'appointments_doctor_date_start_active_unique',
+    'appointments_session_start_index',
+    'appointments_patient_date_status_index',
+    'appointments_session_slot_active_unique',
+] as $index) {
     check(in_array($index, $indexes, true), "indice $index presente");
 }
 
 $roles = DB::table('roles')->pluck('name')->all();
-check($roles === ['admin', 'doctor', 'patient'], 'roles sembrados: '.implode(', ', $roles));
+sort($roles);
+$expectedRoles = ['admin', 'doctor', 'patient'];
+check($roles === $expectedRoles, 'roles sembrados: '.implode(', ', $roles));
+
+$appointmentsBefore = Appointment::count();
 
 DB::beginTransaction();
 
@@ -100,5 +122,5 @@ try {
     DB::rollBack();
 }
 
-check(Appointment::count() === 0, 'transaccion revertida: no quedan citas de prueba');
+check(Appointment::count() === $appointmentsBefore, 'transaccion revertida: no quedan citas de prueba');
 echo "VERIFICACION MySQL COMPLETA\n";

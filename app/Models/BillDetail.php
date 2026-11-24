@@ -16,7 +16,7 @@ class BillDetail extends Model
      */
     protected $fillable = [
         'bills_id',
-        'patient_id',
+        'patients_id',
         'service',
         'hour',
         'price',
@@ -27,6 +27,6 @@ class BillDetail extends Model
     }
     public function Patient()
     {
-        return $this->belongsTo(Patient::class, 'patient_id', 'id');
+        return $this->belongsTo(Patient::class, 'patients_id', 'id');
     }
 }

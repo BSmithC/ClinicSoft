@@ -23,7 +23,7 @@ class User extends Authenticatable
         'sur_name',
         'last_name',
         'second_sur_name',
-        'date_of_bith',
+        'date_of_birth',
         'phone_number',
         'nacionality',
         'address',
@@ -40,9 +40,37 @@ class User extends Authenticatable
     {
         return $this->hasMany(Bill::class, 'users_id', 'id');
     }
-    public function Patient()
+    /**
+     * Clinical profile (1:1). doctor_id in clinical tables remains this user id.
+     */
+    public function doctorProfile()
     {
-        return $this->hasMany(Patient::class, 'users_id', 'id');
+        return $this->hasOne(Doctor::class);
+    }
+
+    public function medicalSessions()
+    {
+        return $this->hasMany(MedicalSession::class, 'doctor_id', 'id');
+    }
+
+    public function appointmentsAsDoctor()
+    {
+        return $this->hasMany(Appointment::class, 'doctor_id', 'id');
+    }
+
+    public function activityLogs()
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin');
+    }
+
+    public function isDoctor(): bool
+    {
+        return $this->hasRole('doctor');
     }
 
     /**

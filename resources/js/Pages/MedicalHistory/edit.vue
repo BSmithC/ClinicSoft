@@ -227,7 +227,9 @@ export default {
     },
     methods: {
         submit() {
-            this.form.put(route('medicalhistories.update'),);
+            this.form.put(route('medicalhistories.update', this.medicalhistories.id), {
+                preserveScroll: true,
+            });
         }
     }
 }
