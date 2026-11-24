@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\AppointmentStatus;
 use App\Enums\MedicalSessionStatus;
+use App\Events\AppointmentCancelled;
 use App\Events\MedicalSessionCancelled;
 use App\Models\BlockedDate;
 use App\Models\Doctor;
@@ -33,6 +34,7 @@ final class MedicalSessionService
 
         return $this->lock->run("session:{$doctorId}:{$date}", function () use ($data, $doctorId, $date) {
             $this->validateDoctor($doctorId);
+            $this->validateBusinessHours($date, $data['start_time'], $data['end_time']);
             $this->validateTimes($data['start_time'], $data['end_time']);
             $this->validateSpecialty($data['specialty_id'] ?? null);
             $this->validateBlockedDate($doctorId, $date);
@@ -60,24 +62,57 @@ final class MedicalSessionService
      */
     public function update(MedicalSession $session, array $data): MedicalSession
     {
-        $doctorId = (int) ($data['doctor_id'] ?? $session->doctor_id);
-        $date = $data['date'] ?? $session->date->toDateString();
+        $originalDoctorId = (int) $session->doctor_id;
+        $originalDate = $session->date->toDateString();
+        $doctorId = (int) ($data['doctor_id'] ?? $originalDoctorId);
+        $date = $data['date'] ?? $originalDate;
         $start = $data['start_time'] ?? $session->start_time;
         $end = $data['end_time'] ?? $session->end_time;
 
-        return $this->lock->run("session:{$doctorId}:{$date}", function () use ($session, $data, $doctorId, $date, $start, $end) {
+        $keys = ["session:{$doctorId}:{$date}"];
+        if ($doctorId !== $originalDoctorId || $date !== $originalDate) {
+            $keys[] = "session:{$originalDoctorId}:{$originalDate}";
+        }
+        sort($keys);
+
+        return $this->lock->runMany($keys, function () use (
+            $session,
+            $data,
+            $doctorId,
+            $originalDoctorId,
+            $date,
+            $start,
+            $end
+        ) {
             $this->validateDoctor($doctorId);
+            $this->validateBusinessHours($date, $start, $end);
             $this->validateTimes($start, $end);
             $this->validateSpecialty($data['specialty_id'] ?? $session->specialty_id);
             $this->validateBlockedDate($doctorId, $date, $session->id);
             $this->validateNoOverlap($doctorId, $date, $start, $end, $session->id);
             $breaks = $data['breaks'] ?? $session->breaks->toArray();
-            $this->validateBreaks($start, $end, $breaks);
+            $this->validateBreaks($start, $end, $breaks, $session);
 
             unset($data['breaks']);
 
-            DB::transaction(function () use ($session, $data, $breaks, $date, $start, $end) {
+            DB::transaction(function () use (
+                $session,
+                $data,
+                $doctorId,
+                $originalDoctorId,
+                $breaks,
+                $date,
+                $start,
+                $end
+            ) {
                 $session->update($data);
+
+                if ($doctorId !== $originalDoctorId) {
+                    $session->appointments()
+                        ->where('doctor_id', $originalDoctorId)
+                        ->lockForUpdate()
+                        ->update(['doctor_id' => $doctorId]);
+                }
 
                 $session->appointments()
                     ->active()
@@ -112,6 +147,11 @@ final class MedicalSessionService
 
     public function cancel(MedicalSession $session, ?string $reason = null): MedicalSession
     {
+        if ($session->status instanceof MedicalSessionStatus
+            && $session->status === MedicalSessionStatus::Cancelled) {
+            return $session;
+        }
+
         return $this->lock->run("session:{$session->doctor_id}:{$session->date->toDateString()}", function () use ($session, $reason) {
             DB::transaction(function () use ($session, $reason) {
                 $session->update(['status' => MedicalSessionStatus::Cancelled]);
@@ -127,6 +167,12 @@ final class MedicalSessionService
                     ->lockForUpdate()
                     ->each(function ($appointment) use ($reason) {
                         $from = $appointment->status;
+
+                        $this->statusMachine::assertTransition(
+                            $appointment,
+                            AppointmentStatus::Cancelled
+                        );
+
                         $appointment->update([
                             'status' => AppointmentStatus::Cancelled,
                             'active' => false,
@@ -138,6 +184,8 @@ final class MedicalSessionService
                             'actor_id' => auth()->id(),
                             'reason' => $reason ?: 'Sesión médica cancelada.',
                         ]);
+
+                        AppointmentCancelled::dispatch($appointment->fresh(), $reason);
                     });
             });
 
@@ -152,10 +200,15 @@ final class MedicalSessionService
      */
     public function blockDate(array $data): BlockedDate
     {
-        return BlockedDate::updateOrCreate(
-            ['doctor_id' => $data['doctor_id'], 'date' => $data['date']],
-            ['reason' => $data['reason'] ?? null]
-        );
+        $doctorId = (int) $data['doctor_id'];
+        $date = $data['date'];
+
+        return $this->lock->run("session:{$doctorId}:{$date}", function () use ($data, $doctorId, $date) {
+            return DB::transaction(fn () => BlockedDate::updateOrCreate(
+                ['doctor_id' => $doctorId, 'date' => $date],
+                ['reason' => $data['reason'] ?? null]
+            ));
+        });
     }
 
     public function unblockDate(int $doctorId, string $date): bool
@@ -164,6 +217,22 @@ final class MedicalSessionService
             ->where('doctor_id', $doctorId)
             ->whereDate('date', $date)
             ->delete();
+    }
+
+    private function validateBusinessHours(string $date, string $start, string $end): void
+    {
+        $weekday = Carbon::parse($date)->dayOfWeek;
+        $config = config('appointments');
+
+        if (! in_array($weekday, $config['weekdays'], true)) {
+            throw ValidationException::withMessages(['date' => 'Las sesiones médicas solo pueden programarse de lunes a viernes.']);
+        }
+
+        if (strcmp($start, $config['start_time']) < 0 || strcmp($end, $config['end_time']) > 0) {
+            throw ValidationException::withMessages([
+                'start_time' => "Las sesiones médicas deben estar entre {$config['start_time']} y {$config['end_time']}.",
+            ]);
+        }
     }
 
     private function validateDoctor(int $doctorId): void
@@ -222,8 +291,12 @@ final class MedicalSessionService
     /**
      * @param array<int, array<string, mixed>> $breaks
      */
-    private function validateBreaks(string $start, string $end, array $breaks): void
-    {
+    private function validateBreaks(
+        string $start,
+        string $end,
+        array $breaks,
+        ?MedicalSession $session = null
+    ): void {
         $previousEnd = $start;
 
         foreach ($breaks as $break) {
@@ -235,6 +308,21 @@ final class MedicalSessionService
                 || strcmp($breakEnd, $end) > 0
                 || strcmp($breakStart, $previousEnd) < 0) {
                 throw ValidationException::withMessages(['breaks' => 'Los descansos deben estar dentro de la sesión y no solaparse.']);
+            }
+
+            if ($session) {
+                $conflict = $session->appointments()
+                    ->active()
+                    ->notTerminal()
+                    ->where('starttime', '<', $breakEnd)
+                    ->where('endtime', '>', $breakStart)
+                    ->exists();
+
+                if ($conflict) {
+                    throw ValidationException::withMessages([
+                        'breaks' => 'No se puede registrar un descanso sobre citas ya reservadas.',
+                    ]);
+                }
             }
 
             $previousEnd = $breakEnd;

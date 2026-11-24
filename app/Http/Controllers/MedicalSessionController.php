@@ -69,7 +69,13 @@ class MedicalSessionController extends Controller
 
     public function store(StoreMedicalSessionRequest $request, MedicalSessionService $service)
     {
-        $service->create($request->validated());
+        $data = $request->validated();
+
+        if (! Auth::user()->isAdmin()) {
+            $data['doctor_id'] = Auth::id();
+        }
+
+        $service->create($data);
 
         return redirect()->route('sessions.index')->with('success', 'Sesión médica programada.');
     }
@@ -100,7 +106,20 @@ class MedicalSessionController extends Controller
         MedicalSession $session,
         MedicalSessionService $service
     ) {
-        $service->update($session, $request->validated());
+        $data = $request->validated();
+
+        if (! Auth::user()->isAdmin()) {
+            $data['doctor_id'] = Auth::id();
+        }
+
+        if (($data['status'] ?? null) === MedicalSessionStatus::Cancelled->value) {
+            $service->cancel($session, $data['reason'] ?? null);
+
+            return redirect()->route('sessions.index')
+                ->with('success', 'Sesión cancelada; las citas afectadas quedaron registradas como canceladas.');
+        }
+
+        $service->update($session, $data);
 
         return redirect()->route('sessions.index')->with('success', 'Sesión médica actualizada.');
     }

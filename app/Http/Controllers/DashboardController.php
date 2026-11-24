@@ -47,6 +47,10 @@ class DashboardController extends Controller
 
         $activity = ActivityLog::query()->with('user:id,name')->orderByDesc('created_at');
 
+        if (! $isAdmin) {
+            $activity->where('user_id', $user->id);
+        }
+
         $statusCounts = [];
         foreach (AppointmentStatus::cases() as $status) {
             $statusCounts[$status->value] = (clone $appointments)->where('status', $status->value)->count();

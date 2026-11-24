@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\Drug;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class MedicalHistoryController extends Controller
 {
@@ -21,7 +22,13 @@ class MedicalHistoryController extends Controller
 
     public function index()
     {
-        $medicalhistories = MedicalHistory::with(['patient', 'doctor', 'drug'])->get();
+        $query = MedicalHistory::with(['patient', 'doctor', 'drug']);
+
+        if (! Auth::user()->isAdmin()) {
+            $query->where('doctor_id', Auth::id());
+        }
+
+        $medicalhistories = $query->get();
         return Inertia::render('MedicalHistory/index', ['medicalhistories' => $medicalhistories]);
     }
 

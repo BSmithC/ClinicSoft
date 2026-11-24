@@ -36,10 +36,15 @@ final class AvailabilityService
         ?int $ignoreId = null
     ): array {
         $errors = $this->legacy->validate($doctorId, $date, $start, $end, $ignoreId);
+
+        if (BlockedDate::query()->where('doctor_id', $doctorId)->whereDate('date', $date)->exists()) {
+            $errors[] = 'La fecha está bloqueada para este médico.';
+        }
+
         $doctor = User::find($doctorId);
 
-        if (! $doctor) {
-            $errors[] = 'El médico seleccionado no existe.';
+        if (! $doctor || ! $doctor->hasRole('doctor')) {
+            $errors[] = 'El médico seleccionado no existe o no tiene rol médico.';
         } elseif ($doctor->doctorProfile()->exists() && ! $doctor->doctorProfile->active) {
             $errors[] = 'El médico seleccionado está inactivo.';
         }
@@ -58,8 +63,11 @@ final class AvailabilityService
     /**
      * @return array<int, array<string, mixed>>
      */
-    public function slotsForSession(MedicalSession $session, ?int $patientId = null): array
-    {
+    public function slotsForSession(
+        MedicalSession $session,
+        ?int $patientId = null,
+        ?int $ignoreId = null
+    ): array {
         $session->loadMissing('breaks', 'appointments');
         $blocked = BlockedDate::query()
             ->where('doctor_id', $session->doctor_id)
@@ -71,7 +79,8 @@ final class AvailabilityService
         $finish = $this->toMinutes($session->end_time);
         $bookings = $session->appointments
             ->filter(fn (Appointment $appointment) => $appointment->active
-                && ! $appointment->status->isTerminal())
+                && ! $appointment->status->isTerminal()
+                && $appointment->id !== $ignoreId)
             ->values();
         $slots = [];
 
@@ -88,7 +97,8 @@ final class AvailabilityService
                 $patientId,
                 $session->date->toDateString(),
                 $start,
-                $end
+                $end,
+                $ignoreId
             );
             $inBreak = $session->breaks->contains(fn ($break) => $this->overlaps(
                 $start,
@@ -98,20 +108,27 @@ final class AvailabilityService
             ));
 
             $reason = null;
+            $reasonCode = null;
             if (! $session->status instanceof MedicalSessionStatus) {
                 $session->status = MedicalSessionStatus::from((string) $session->status);
             }
             if (! $session->status->acceptsBookings()) {
+                $reasonCode = 'session_closed';
                 $reason = 'La sesión no admite reservas.';
             } elseif ($blocked) {
+                $reasonCode = 'blocked';
                 $reason = 'La fecha está bloqueada para este médico.';
             } elseif ($inBreak) {
+                $reasonCode = 'break';
                 $reason = 'Horario de descanso.';
             } elseif ($bookings->count() >= (int) $session->capacity) {
+                $reasonCode = 'capacity_full';
                 $reason = 'Capacidad completa.';
             } elseif ($conflict) {
+                $reasonCode = 'occupied';
                 $reason = 'Horario ocupado.';
             } elseif ($samePatientConflict) {
+                $reasonCode = 'patient_conflict';
                 $reason = 'El paciente ya tiene una cita en ese horario.';
             }
 
@@ -120,6 +137,7 @@ final class AvailabilityService
                 'end' => $end,
                 'available' => $reason === null,
                 'reason' => $reason,
+                'reasonCode' => $reasonCode,
             ];
 
             $cursor += $step;

@@ -27,8 +27,6 @@ class UpdateAppointmentRequest extends FormRequest
             'session_id' => ['nullable', 'exists:medical_sessions,id'],
             'specialty_id' => ['nullable', 'exists:specialties,id'],
             'status' => ['sometimes', Rule::enum(AppointmentStatus::class)],
-            'attended' => ['sometimes', 'boolean'],
-            'active' => ['sometimes', 'boolean'],
             'date' => ['required', 'date_format:Y-m-d'],
             'starttime' => ['required', 'date_format:H:i,H:i:s'],
             'endtime' => ['required', 'date_format:H:i,H:i:s', 'after:starttime'],

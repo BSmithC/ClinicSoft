@@ -67,16 +67,12 @@ class AppointmentController extends Controller
 
     public function create()
     {
-        $doctorQuery = User::query()->whereHas('roles', fn (Builder $q) => $q->where('name', 'doctor'));
-
-        if (! Auth::user()->isAdmin()) {
-            $doctorQuery->whereKey(Auth::id());
-        }
-
         return Inertia::render('Appointment/create', [
             'patients' => Patient::query()->get(['id', 'name', 'last_name']),
-            'doctors' => $doctorQuery->get(['id', 'name', 'last_name']),
-            'doctorProfiles' => \App\Models\Doctor::query()->with('user:id,name,last_name')->get(),
+            'doctors' => $this->doctorsForForm(),
+            'doctorProfiles' => \App\Models\Doctor::query()->active()
+                ->with('user:id,name,last_name')
+                ->get(),
             'specialties' => Specialty::query()->active()->get(['id', 'name', 'slug']),
             'sessions' => $this->sessionsForCurrentUser(),
             'drugs' => Drug::query()->get(['id', 'name']),
@@ -92,8 +88,10 @@ class AppointmentController extends Controller
 
         $appointment = $booking->book($data);
 
-        return redirect()->route('appointments.index')
-            ->with('success', "Cita #{$appointment->id} creada correctamente.");
+        return $this->afterWriteRedirect(
+            $request,
+            "Cita #{$appointment->id} creada correctamente."
+        );
     }
 
     public function show(Appointment $appointment)
@@ -113,8 +111,7 @@ class AppointmentController extends Controller
         return Inertia::render('Appointment/edit', [
             'appointments' => $appointment,
             'patients' => Patient::query()->get(['id', 'name', 'last_name']),
-            'doctors' => User::query()->whereHas('roles', fn (Builder $q) => $q->where('name', 'doctor'))
-                ->get(['id', 'name', 'last_name']),
+            'doctors' => $this->doctorsForForm(),
             'specialties' => Specialty::query()->active()->get(['id', 'name', 'slug']),
             'sessions' => $this->sessionsForCurrentUser(),
             'drugs' => Drug::query()->get(['id', 'name']),
@@ -135,23 +132,9 @@ class AppointmentController extends Controller
         $data = $request->validated();
         $this->enforceDoctorScope($data);
 
-        if (isset($data['status'])) {
-            $status = AppointmentStatus::from($data['status']);
+        $booking->updateAppointment($appointment, $data);
 
-            if ($status !== $appointment->status) {
-                if ($status === AppointmentStatus::Cancelled) {
-                    $booking->cancel($appointment, $data['reason'] ?? null);
-                } else {
-                    $booking->changeStatus($appointment, $status, $data['reason'] ?? null);
-                }
-            }
-
-            unset($data['status']);
-        }
-
-        $booking->reschedule($appointment->fresh(), $data);
-
-        return redirect()->route('appointments.index')->with('success', 'Cita actualizada correctamente.');
+        return $this->afterWriteRedirect($request, 'Cita actualizada correctamente.');
     }
 
     public function changeStatus(
@@ -179,7 +162,7 @@ class AppointmentController extends Controller
     ) {
         $booking->cancel($appointment, $request->validated('reason'));
 
-        return redirect()->route('appointments.index')->with('success', 'Cita cancelada. El espacio fue liberado.');
+        return $this->afterWriteRedirect($request, 'Cita cancelada. El espacio fue liberado.');
     }
 
     public function history(Appointment $appointment)
@@ -190,6 +173,28 @@ class AppointmentController extends Controller
             'appointment' => $appointment->loadMissing('patient:id,name,last_name', 'doctor:id,name,last_name'),
             'histories' => $appointment->histories()->with('actor:id,name')->get(),
         ]);
+    }
+
+    /**
+     * Calendar writes come from the agenda drawer/form and must return to the
+     * calendar; regular appointment pages keep their existing destination.
+     */
+    private function afterWriteRedirect(Request $request, string $message)
+    {
+        if (! $request->boolean('from_calendar')) {
+            return redirect()->route('appointments.index')->with('success', $message);
+        }
+
+        $agendaUrl = route('agenda.index');
+        $referer = $request->headers->get('referer');
+
+        // Keep the selected view, date and filters when the request comes from
+        // the calendar; fall back to the plain agenda route without a referer.
+        $target = $referer && str_starts_with($referer, $agendaUrl)
+            ? $referer
+            : $agendaUrl;
+
+        return redirect()->to($target)->with('success', $message);
     }
 
     /**
@@ -210,6 +215,21 @@ class AppointmentController extends Controller
         if (! Auth::user()->isAdmin()) {
             $data['doctor_id'] = Auth::id();
         }
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection<int, User>
+     */
+    private function doctorsForForm()
+    {
+        $query = User::query()
+            ->whereHas('roles', fn (Builder $q) => $q->where('name', 'doctor'));
+
+        if (! Auth::user()->isAdmin()) {
+            $query->whereKey(Auth::id());
+        }
+
+        return $query->orderBy('name')->get(['id', 'name', 'last_name']);
     }
 
     /**

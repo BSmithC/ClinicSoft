@@ -33,6 +33,8 @@ class ModulePolicy
 
     private function isStaff(User $user): bool
     {
-        return $user->hasAnyRole(['admin', 'doctor']);
+        // These modules are hidden from doctors in the UI, so the backend must
+        // enforce the same boundary instead of relying on navigation only.
+        return $user->isAdmin();
     }
 }

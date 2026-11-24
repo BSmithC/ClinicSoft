@@ -94,16 +94,8 @@ class SecurityTest extends TestCase
                 ->missing('drugs.0.description')
             );
 
-        $this->actingAs($doctor)->get(route('bills.create'))
-            ->assertInertia(fn (Assert $page) => $page
-                ->has('users', 1)
-                ->has('patients', 1)
-                ->has('drugs', 1)
-                ->missing('users.0.email')
-                ->missing('users.0.insurance')
-                ->missing('patients.0.address')
-                ->missing('drugs.0.description')
-            );
+        // Billing is admin-only in both the UI and the backend.
+        $this->actingAs($doctor)->get(route('bills.create'))->assertForbidden();
     }
 
     public function test_doctor_can_open_detail_and_edit_pages_of_all_modules(): void
@@ -155,11 +147,19 @@ class SecurityTest extends TestCase
             'drug_id' => $drug->id,
         ]);
 
-        $urls = [
+        $clinicalUrls = [
             route('appointments.show', $appointment),
             route('appointments.edit', $appointment),
             route('patients.show', $patient),
             route('patients.edit', $patient),
+        ];
+
+        foreach ($clinicalUrls as $url) {
+            $this->actingAs($doctor)->get($url)->assertStatus(200, $url);
+        }
+
+        // Modules hidden from doctors in the sidebar are also closed in the backend.
+        $adminOnlyUrls = [
             route('drugs.show', $drug),
             route('drugs.edit', $drug),
             route('bills.show', $bill),
@@ -168,8 +168,8 @@ class SecurityTest extends TestCase
             route('medicalhistories.edit', $history),
         ];
 
-        foreach ($urls as $url) {
-            $this->actingAs($doctor)->get($url)->assertStatus(200, $url);
+        foreach ($adminOnlyUrls as $url) {
+            $this->actingAs($doctor)->get($url)->assertForbidden();
         }
     }
 

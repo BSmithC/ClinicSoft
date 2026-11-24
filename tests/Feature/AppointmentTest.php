@@ -102,7 +102,7 @@ class AppointmentTest extends TestCase
             ->assertSessionHasErrors('starttime');
     }
 
-    public function test_completed_status_marks_appointment_as_attended(): void
+    public function test_terminal_initial_status_is_rejected_and_completion_marks_attendance(): void
     {
         $doctor = $this->doctor();
         $patient = Patient::factory()->create();
@@ -114,12 +114,30 @@ class AppointmentTest extends TestCase
             '09:00',
             '10:00',
             ['status' => AppointmentStatus::Completed->value]
-        ))->assertRedirect(route('appointments.index'));
+        ))->assertSessionHasErrors('status');
+
+        $appointment = Appointment::create([
+            'title' => 'Cita confirmada',
+            'doctor_id' => $doctor->id,
+            'patient_id' => $patient->id,
+            'status' => AppointmentStatus::Confirmed,
+            'date' => $this->weekdayDate(),
+            'starttime' => '09:00:00',
+            'endtime' => '10:00:00',
+            'attended' => false,
+            'active' => true,
+        ]);
+
+        $this->actingAs($doctor)->post(route('appointments.status', $appointment), [
+            'status' => AppointmentStatus::Completed->value,
+            'reason' => 'Consulta finalizada.',
+        ])->assertStatus(302);
 
         $this->assertDatabaseHas('appointments', [
-            'doctor_id' => $doctor->id,
+            'id' => $appointment->id,
             'status' => AppointmentStatus::Completed->value,
             'attended' => true,
+            'active' => false,
         ]);
     }
 

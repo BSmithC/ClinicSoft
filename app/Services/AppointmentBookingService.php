@@ -8,6 +8,7 @@ use App\Events\AppointmentCancelled;
 use App\Events\AppointmentStatusChanged;
 use App\Models\Appointment;
 use App\Models\MedicalSession;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -41,9 +42,12 @@ final class AppointmentBookingService
             : null;
 
         if ($sessionPreview) {
+            $this->assertSessionScope($sessionPreview);
             $doctorId = (int) $sessionPreview->doctor_id;
             $date = $sessionPreview->date->toDateString();
         }
+
+        $this->assertDoctorScope($doctorId);
 
         $keys = [
             "booking:{$doctorId}:{$date}",
@@ -62,6 +66,7 @@ final class AppointmentBookingService
 
                 if (! empty($data['session_id'])) {
                     $session = MedicalSession::whereKey($data['session_id'])->lockForUpdate()->firstOrFail();
+                    $this->assertSessionScope($session);
                     $data['doctor_id'] = $session->doctor_id;
                     $data['date'] = $session->date->toDateString();
                     $data['specialty_id'] = $session->specialty_id;
@@ -102,11 +107,11 @@ final class AppointmentBookingService
                     'session_id' => $session?->id,
                     'specialty_id' => $data['specialty_id'] ?? null,
                     'status' => $status,
-                    'attended' => ($data['attended'] ?? false) || $status === AppointmentStatus::Completed,
+                    'attended' => $status === AppointmentStatus::Completed,
                     'date' => $data['date'],
                     'starttime' => $data['starttime'],
                     'endtime' => $data['endtime'],
-                    'active' => ($data['active'] ?? true) && ! $status->isTerminal(),
+                    'active' => ! $status->isTerminal(),
                 ]);
 
                 $appointment->histories()->create([
@@ -141,9 +146,12 @@ final class AppointmentBookingService
             : null;
 
         if ($sessionPreview) {
+            $this->assertSessionScope($sessionPreview);
             $doctorId = (int) $sessionPreview->doctor_id;
             $date = $sessionPreview->date->toDateString();
         }
+
+        $this->assertDoctorScope($doctorId);
 
         // Lock both the origin and the destination so a move between doctors
         // cannot race with a new booking in either agenda.
@@ -157,6 +165,7 @@ final class AppointmentBookingService
                 $session = null;
                 if (! empty($data['session_id'])) {
                     $session = MedicalSession::whereKey($data['session_id'])->lockForUpdate()->firstOrFail();
+                    $this->assertSessionScope($session);
                     $doctorId = $session->doctor_id;
                     $date = $session->date->toDateString();
                     $data['doctor_id'] = $doctorId;
@@ -208,11 +217,210 @@ final class AppointmentBookingService
                     'date' => $date,
                     'starttime' => $data['starttime'],
                     'endtime' => $data['endtime'],
-                    'active' => $data['active'] ?? $appointment->active,
-                    'attended' => $data['attended'] ?? $appointment->attended,
+                    'active' => ! $appointment->status->isTerminal(),
+                    'attended' => $appointment->attended,
                 ]);
 
                 return $appointment->fresh();
+            });
+        });
+    }
+
+    /**
+     * Updates status and scheduling in one atomic operation. This is the entry
+     * point used by AppointmentController::update() so a failed reschedule can
+     * never leave a partial status write behind.
+     *
+     * @param array<string, mixed> $data
+     */
+    public function updateAppointment(Appointment $appointment, array $data): Appointment
+    {
+        $requestedStatus = isset($data['status']) && $data['status'] !== ''
+            ? AppointmentStatus::from($data['status'])
+            : null;
+        $reason = $data['reason'] ?? null;
+
+        unset($data['status'], $data['reason'], $data['active'], $data['attended']);
+
+        if ($requestedStatus) {
+            $this->statusMachine::assertTransition($appointment, $requestedStatus);
+        }
+
+        $data['starttime'] = $this->normalizeTime($data['starttime'] ?? $appointment->starttime);
+        $data['endtime'] = $this->normalizeTime($data['endtime'] ?? $appointment->endtime);
+        $patientId = (int) ($data['patient_id'] ?? $appointment->patient_id);
+        // A session-bound appointment must keep its clinical session unless the
+        // caller explicitly selects another one; dropping it would bypass all
+        // session, break, block and capacity rules.
+        $sessionId = ! empty($data['session_id'])
+            ? (int) $data['session_id']
+            : ($appointment->session_id ? (int) $appointment->session_id : null);
+
+        $sessionPreview = $sessionId
+            ? MedicalSession::query()->find($sessionId)
+            : null;
+
+        if ($sessionId && ! $sessionPreview) {
+            throw ValidationException::withMessages(['session_id' => 'La sesión seleccionada no existe.']);
+        }
+
+        if ($sessionPreview) {
+            $this->assertSessionScope($sessionPreview);
+            $doctorId = (int) $sessionPreview->doctor_id;
+            $date = $sessionPreview->date->toDateString();
+            $data['doctor_id'] = $doctorId;
+            $data['date'] = $date;
+            $data['specialty_id'] = $sessionPreview->specialty_id;
+        } else {
+            $doctorId = (int) ($data['doctor_id'] ?? $appointment->doctor_id);
+            $date = $data['date'] ?? $this->dateKey($appointment->date);
+            $this->assertDoctorScope($doctorId);
+        }
+
+        $schedulingChanged = $doctorId !== (int) $appointment->doctor_id
+            || $date !== $this->dateKey($appointment->date)
+            || $patientId !== (int) $appointment->patient_id
+            || $sessionId !== ($appointment->session_id ? (int) $appointment->session_id : null)
+            || $data['starttime'] !== $this->normalizeTime($appointment->starttime)
+            || $data['endtime'] !== $this->normalizeTime($appointment->endtime);
+
+        if ($requestedStatus?->isTerminal() && $schedulingChanged) {
+            throw ValidationException::withMessages([
+                'status' => 'No se puede reprogramar una cita cuyo estado final es terminal.',
+            ]);
+        }
+
+        $keys = array_merge($this->appointmentLockKeys($appointment), [
+            "booking:{$doctorId}:{$date}",
+            "patient:{$patientId}:{$date}",
+        ]);
+
+        return $this->lock->runMany($keys, function () use (
+            $appointment,
+            $data,
+            $requestedStatus,
+            $reason,
+            $sessionId,
+            $doctorId,
+            $date,
+            $patientId,
+            $schedulingChanged
+        ) {
+            return DB::transaction(function () use (
+                $appointment,
+                $data,
+                $requestedStatus,
+                $reason,
+                $sessionId,
+                $doctorId,
+                $date,
+                $patientId,
+                $schedulingChanged
+            ) {
+                $locked = Appointment::query()->whereKey($appointment->id)->lockForUpdate()->firstOrFail();
+
+                if ($requestedStatus) {
+                    $this->statusMachine::assertTransition($locked, $requestedStatus);
+                }
+
+                $session = null;
+                if ($sessionId) {
+                    $session = MedicalSession::whereKey($sessionId)->lockForUpdate()->firstOrFail();
+                    $this->assertSessionScope($session);
+                    $doctorId = (int) $session->doctor_id;
+                    $date = $session->date->toDateString();
+                    $data['doctor_id'] = $doctorId;
+                    $data['date'] = $date;
+                    $data['specialty_id'] = $session->specialty_id;
+                    $errors = $this->availability->validateSessionSlot(
+                        $session,
+                        $data['starttime'],
+                        $data['endtime'],
+                        $patientId,
+                        $locked->id
+                    );
+                } else {
+                    $errors = $this->availability->validateLegacy(
+                        $doctorId,
+                        $date,
+                        $data['starttime'],
+                        $data['endtime'],
+                        $patientId,
+                        $locked->id
+                    );
+                }
+
+                if ($errors !== []) {
+                    throw ValidationException::withMessages(['starttime' => $errors]);
+                }
+
+                $finalStatus = $requestedStatus ?? $locked->status;
+
+                if ($finalStatus->isTerminal() && $schedulingChanged) {
+                    throw ValidationException::withMessages([
+                        'status' => 'No se puede reprogramar una cita cuyo estado final es terminal.',
+                    ]);
+                }
+
+                $statusChanged = $requestedStatus !== null && $requestedStatus !== $locked->status;
+
+                if ($statusChanged) {
+                    $locked->histories()->create([
+                        'from_status' => $locked->status->value,
+                        'to_status' => $requestedStatus->value,
+                        'actor_id' => auth()->id(),
+                        'reason' => $reason,
+                    ]);
+                }
+
+                if ($schedulingChanged) {
+                    $locked->histories()->create([
+                        'from_status' => $locked->status->value,
+                        'to_status' => $locked->status->value,
+                        'from_date' => $locked->date,
+                        'to_date' => $date,
+                        'from_start' => $locked->starttime,
+                        'to_start' => $data['starttime'],
+                        'from_end' => $locked->endtime,
+                        'to_end' => $data['endtime'],
+                        'actor_id' => auth()->id(),
+                        'reason' => $reason ?: 'Cita reprogramada.',
+                    ]);
+                }
+
+                $locked->update([
+                    'title' => $data['title'] ?? $locked->title,
+                    'notes' => $data['notes'] ?? $locked->notes,
+                    'doctor_id' => $doctorId,
+                    'patient_id' => $patientId,
+                    'drug_id' => $data['drug_id'] ?? $locked->drug_id,
+                    'session_id' => $session?->id,
+                    'specialty_id' => $data['specialty_id'] ?? $locked->specialty_id,
+                    'status' => $finalStatus,
+                    'date' => $date,
+                    'starttime' => $data['starttime'],
+                    'endtime' => $data['endtime'],
+                    'attended' => $finalStatus === AppointmentStatus::Completed ? true : $locked->attended,
+                    'active' => ! $finalStatus->isTerminal(),
+                    'cancelled_at' => $finalStatus === AppointmentStatus::Cancelled
+                        ? ($locked->cancelled_at ?? now())
+                        : $locked->cancelled_at,
+                ]);
+
+                $updated = $locked->fresh();
+
+                if ($statusChanged && $finalStatus === AppointmentStatus::Cancelled) {
+                    AppointmentCancelled::dispatch($updated, $reason);
+                } elseif ($statusChanged) {
+                    AppointmentStatusChanged::dispatch(
+                        $updated,
+                        $appointment->status->value,
+                        $finalStatus->value,
+                        $reason
+                    );
+                }
+
+                return $updated;
             });
         });
     }
@@ -258,6 +466,11 @@ final class AppointmentBookingService
         return $this->lock->runMany($this->appointmentLockKeys($appointment), function () use ($appointment, $reason) {
             return DB::transaction(function () use ($appointment, $reason) {
                 $locked = Appointment::query()->whereKey($appointment->id)->lockForUpdate()->firstOrFail();
+
+                if ($locked->status === AppointmentStatus::Cancelled) {
+                    return $locked;
+                }
+
                 $from = $locked->status;
 
                 self::assertStatus($this->statusMachine, $locked, AppointmentStatus::Cancelled);
@@ -280,6 +493,20 @@ final class AppointmentBookingService
                 return $locked->fresh();
             });
         });
+    }
+
+    private function assertDoctorScope(int $doctorId): void
+    {
+        $user = Auth::user();
+
+        if ($user && ! $user->isAdmin() && $doctorId !== (int) $user->id) {
+            abort(403, 'No puedes gestionar la agenda de otro médico.');
+        }
+    }
+
+    private function assertSessionScope(MedicalSession $session): void
+    {
+        $this->assertDoctorScope((int) $session->doctor_id);
     }
 
     private static function assertStatus(

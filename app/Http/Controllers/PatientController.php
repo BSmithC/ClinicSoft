@@ -76,6 +76,7 @@ class PatientController extends Controller
             'history' => $patient->Appointment()
                 ->with('doctor:id,name,last_name', 'session:id,title')
                 ->with('histories')
+                ->when(! Auth::user()->isAdmin(), fn ($query) => $query->where('doctor_id', Auth::id()))
                 ->orderByDesc('date')
                 ->get(),
         ]);
@@ -110,9 +111,13 @@ class PatientController extends Controller
             'patient' => $patient->only('id', 'name', 'last_name', 'DNI'),
             'appointments' => $patient->Appointment()
                 ->with('doctor:id,name,last_name', 'session:id,title', 'histories.actor:id,name')
+                ->when(! Auth::user()->isAdmin(), fn ($query) => $query->where('doctor_id', Auth::id()))
                 ->orderByDesc('date')
                 ->get(),
-            'medicalHistories' => $patient->medicalHistories()->orderByDesc('created_at')->get(),
+            'medicalHistories' => $patient->medicalHistories()
+                ->when(! Auth::user()->isAdmin(), fn ($query) => $query->where('doctor_id', Auth::id()))
+                ->orderByDesc('created_at')
+                ->get(),
         ]);
     }
 }

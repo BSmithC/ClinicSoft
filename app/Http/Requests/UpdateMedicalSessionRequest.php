@@ -29,6 +29,7 @@ class UpdateMedicalSessionRequest extends FormRequest
             'capacity' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'status' => ['sometimes', Rule::enum(MedicalSessionStatus::class)],
             'notes' => ['nullable', 'string'],
+            'reason' => ['nullable', 'string', 'max:255'],
             'breaks' => ['sometimes', 'array'],
             'breaks.*.start_time' => ['required_with:breaks', 'date_format:H:i'],
             'breaks.*.end_time' => ['required_with:breaks', 'date_format:H:i'],
