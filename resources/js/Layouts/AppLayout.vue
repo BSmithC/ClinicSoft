@@ -59,7 +59,8 @@ const isDoctor = computed(() => roles.value.includes('doctor'));
 const sections = computed(() => {
     const operation = [
         { name: 'dashboard', label: 'Panel general', icon: 'dashboard' },
-        { name: 'appointments.index', label: 'Citas', icon: 'calendar' },
+        { name: 'appointments.welcome', label: 'Citas', icon: 'calendar' },
+        { name: 'appointments.index', label: 'Listado de citas', icon: 'clipboard' },
         { name: 'agenda.index', label: 'Calendario', icon: 'clock' },
         { name: 'sessions.index', label: 'Sesiones médicas', icon: 'clipboard' },
     ];

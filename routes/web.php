@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
             ->name('doctors.agenda');
 
         Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda.index');
+        Route::get('/appointments/welcome', [AppointmentController::class, 'welcome'])->name('appointments.welcome');
         Route::get('/availability', [AvailabilityController::class, 'index'])->name('availability.index');
 
         Route::post('/blocked-dates', [ScheduleController::class, 'store'])->name('blockedDates.store');

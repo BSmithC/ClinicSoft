@@ -14,6 +14,7 @@ use App\Models\Patient;
 use App\Models\Specialty;
 use App\Models\User;
 use App\Services\AppointmentBookingService;
+use App\Services\AvailabilityService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -25,6 +26,75 @@ class AppointmentController extends Controller
     public function __construct()
     {
         $this->authorizeResource(Appointment::class, 'appointment');
+    }
+
+    public function welcome(Request $request, AvailabilityService $availability)
+    {
+        $this->authorize('viewAny', Appointment::class);
+
+        $validated = $request->validate([
+            'doctor_id' => ['sometimes', 'nullable', 'exists:users,id'],
+        ]);
+
+        $isAdmin = Auth::user()->isAdmin();
+        $doctorId = $isAdmin
+            ? (isset($validated['doctor_id']) ? (int) $validated['doctor_id'] : null)
+            : Auth::id();
+        $today = now()->toDateString();
+
+        $appointments = Appointment::query();
+        $this->scopeToDoctor($appointments);
+
+        if ($isAdmin && $doctorId) {
+            $appointments->where('doctor_id', $doctorId);
+        }
+
+        $sessionsToday = MedicalSession::query()
+            ->bookable()
+            ->onDate($today)
+            ->when($doctorId, fn ($query) => $query->where('doctor_id', $doctorId))
+            ->get();
+
+        $availableDoctors = $sessionsToday
+            ->filter(fn (MedicalSession $session) => collect($availability->slotsForSession($session))
+                ->contains('available', true))
+            ->pluck('doctor_id')
+            ->unique()
+            ->count();
+
+        $upcoming = (clone $appointments)
+            ->active()
+            ->notCancelled()
+            ->where('date', '>=', $today)
+            ->with('patient:id,name,last_name', 'doctor:id,name,last_name', 'specialty:id,name')
+            ->orderBy('date')
+            ->orderBy('starttime')
+            ->limit(6)
+            ->get()
+            ->map(fn (Appointment $appointment) => [
+                'id' => $appointment->id,
+                'patient' => $appointment->patient,
+                'doctor' => $appointment->doctor,
+                'specialty' => $appointment->specialty?->name ?? 'Sin especialidad',
+                'date' => $appointment->date->toDateString(),
+                'starttime' => $appointment->starttime,
+                'endtime' => $appointment->endtime,
+                'status' => $appointment->status->value,
+                'can' => ['view' => Auth::user()->can('view', $appointment)],
+            ]);
+
+        return Inertia::render('Appointment/Welcome', [
+            'stats' => [
+                'today' => (clone $appointments)->onDate($today)->notCancelled()->count(),
+                'pending' => (clone $appointments)->where('status', AppointmentStatus::Pending->value)->count(),
+                'confirmed' => (clone $appointments)->where('status', AppointmentStatus::Confirmed->value)->count(),
+                'availableDoctors' => $availableDoctors,
+            ],
+            'upcomingAppointments' => $upcoming,
+            'doctors' => $isAdmin ? $this->doctorsForForm() : [],
+            'filters' => ['doctor_id' => $doctorId],
+            'isAdmin' => $isAdmin,
+        ]);
     }
 
     public function index(Request $request)
