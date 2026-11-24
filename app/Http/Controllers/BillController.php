@@ -23,12 +23,26 @@ class BillController extends Controller
         $query = Bill::query()->select('bills.*');
         $lastDays = $request->input('lastDays', '30');
         if ($search) {
-            $query->where(function (Builder $q) use ($search) {
-                $q->whereRaw('bills.name LIKE ?', ['%' . $search . '%'])
-                    ->orWhereRaw('bills.last_name LIKE ?', ['%' . $search . '%'])
-                    ->orWhereRaw('bills.date_of_birth LIKE ?', ['%' . $search . '%'])
-                    ->orWhereRaw('bills.insurance LIKE ?', ['%' . $search . '%'])
-                    ->orWhereRaw('bills.place_of_birth LIKE ?', ['%' . $search . '%']);
+            $term = '%' . $search . '%';
+            $query->where(function (Builder $q) use ($term) {
+                $q->where('bills.id', 'LIKE', $term)
+                    ->orWhere('bills.payment_type', 'LIKE', $term)
+                    ->orWhereHas('patient', function (Builder $patient) use ($term) {
+                        $patient->where('name', 'LIKE', $term)
+                            ->orWhere('last_name', 'LIKE', $term)
+                            ->orWhere('DNI', 'LIKE', $term);
+                    })
+                    ->orWhereHas('user', function (Builder $user) use ($term) {
+                        $user->where('name', 'LIKE', $term)
+                            ->orWhere('last_name', 'LIKE', $term)
+                            ->orWhere('email', 'LIKE', $term);
+                    })
+                    ->orWhereHas('drugs', function (Builder $drug) use ($term) {
+                        $drug->where('name', 'LIKE', $term);
+                    })
+                    ->orWhereHas('BillDetails', function (Builder $detail) use ($term) {
+                        $detail->where('service', 'LIKE', $term);
+                    });
             });
         }   
         if ($lastDays && $lastDays !== 'all') {
@@ -91,10 +105,16 @@ class BillController extends Controller
 
     public function edit(Bill $bill)
     {
+        $patients = Patient::query()->get(['id', 'name', 'last_name']);
         $users = User::query()->get(['id', 'name', 'last_name']);
         $drugs = Drug::query()->get(['id', 'name']);
         $bill->load('drugs', 'user', 'BillDetails');
-        return Inertia::render('Bill/edit', ['bills' => $bill, 'users' => $users, 'drugs' => $drugs]);
+        return Inertia::render('Bill/edit', [
+            'bills' => $bill,
+            'patients' => $patients,
+            'users' => $users,
+            'drugs' => $drugs,
+        ]);
     }
 
     public function update(Request $request, Bill $bill)

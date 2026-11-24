@@ -3,93 +3,136 @@
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-slate-800 dark:text-white">Especialidades</h1>
-                    <p class="text-sm text-slate-500">Catálogo clínico usado al programar sesiones y citas.</p>
-                </div>
-                <Link :href="route('specialties.create')" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Nueva especialidad</Link>
-            </div>
+            <PageHeader
+                eyebrow="Gestión clínica"
+                title="Especialidades"
+                description="Catálogo clínico usado al programar sesiones y citas."
+            >
+                <template #actions>
+                    <Link :href="route('specialties.create')" class="ui-btn-primary">
+                        <UiIcon name="plus" size="h-4 w-4" />
+                        Nueva especialidad
+                    </Link>
+                </template>
+            </PageHeader>
         </template>
 
-        <form @submit.prevent="submit" class="mb-5 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:flex-row">
-            <input v-model="form.search" type="search" placeholder="Buscar por nombre o descripción" class="w-full rounded-lg border-slate-300 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
-            <button type="submit" class="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white dark:bg-slate-700">Buscar</button>
-        </form>
+        <div class="space-y-5">
+            <form class="ui-card flex flex-col gap-3 p-4 sm:flex-row sm:items-center" @submit.prevent="submit">
+                <SearchInput
+                    v-model="form.search"
+                    placeholder="Buscar por nombre o descripción"
+                    input-id="specialties-search"
+                    class="sm:flex-1"
+                    width="w-full"
+                    @search="submit"
+                />
+                <button type="submit" class="ui-btn-primary w-full sm:w-auto" :disabled="loading">
+                    <UiIcon name="search" size="h-4 w-4" />
+                    Buscar
+                </button>
+            </form>
 
-        <section v-if="specialties.data.length" class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div class="overflow-x-auto">
-                <table class="w-full min-w-[700px] text-left text-sm">
-                    <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                        <tr>
-                            <th class="px-4 py-3">Especialidad</th>
-                            <th class="px-4 py-3">Slug</th>
-                            <th class="px-4 py-3">Médicos</th>
-                            <th class="px-4 py-3">Sesiones</th>
-                            <th class="px-4 py-3">Estado</th>
-                            <th class="px-4 py-3">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                        <tr v-for="specialty in specialties.data" :key="specialty.id">
-                            <td class="px-4 py-3">
-                                <Link :href="route('specialties.show', specialty.id)" class="font-semibold text-blue-600 hover:underline dark:text-blue-400">{{ specialty.name }}</Link>
-                                <p class="text-xs text-slate-500">{{ specialty.description }}</p>
-                            </td>
-                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ specialty.slug }}</td>
-                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ specialty.doctors_count }}</td>
-                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ specialty.sessions_count }}</td>
-                            <td class="px-4 py-3">
-                                <span class="rounded-full px-2 py-1 text-xs font-semibold" :class="specialty.active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200'">
-                                    {{ specialty.active ? 'Activa' : 'Inactiva' }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="flex flex-wrap gap-3 text-xs font-semibold">
-                                    <Link :href="route('specialties.edit', specialty.id)" class="text-amber-600 hover:underline">Editar</Link>
-                                    <button v-if="specialty.active" type="button" class="text-rose-600 hover:underline" @click="deactivate(specialty)">Desactivar</button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <DataTable
+                :columns="columns"
+                :rows="specialties.data"
+                :loading="loading"
+                empty-title="No hay especialidades"
+                empty-description="No hay especialidades que coincidan con la búsqueda."
+            >
+                <template #cell-name="{ row }">
+                    <div class="min-w-0">
+                        <Link :href="route('specialties.show', row.id)" class="font-semibold text-slate-800 hover:text-brand-600 dark:text-white dark:hover:text-brand-400">
+                            {{ row.name }}
+                        </Link>
+                        <p class="truncate text-xs text-slate-500 dark:text-slate-400">{{ row.description || 'Sin descripción' }}</p>
+                    </div>
+                </template>
+
+                <template #cell-status="{ row }">
+                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset" :class="row.active
+                        ? 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/20'
+                        : 'bg-rose-50 text-rose-700 ring-rose-200 dark:bg-rose-400/10 dark:text-rose-300 dark:ring-rose-400/20'">
+                        <span class="h-1.5 w-1.5 rounded-full bg-current" />
+                        {{ row.active ? 'Activa' : 'Inactiva' }}
+                    </span>
+                </template>
+
+                <template #cell-actions="{ row }">
+                    <div class="flex items-center justify-end gap-1">
+                        <Link :href="route('specialties.show', row.id)" class="ui-btn-ghost px-2 py-1.5" title="Ver detalle">
+                            <UiIcon name="eye" size="h-4 w-4" />
+                        </Link>
+                        <Link :href="route('specialties.edit', row.id)" class="ui-btn-ghost px-2 py-1.5" title="Editar">
+                            <UiIcon name="pencil" size="h-4 w-4" />
+                        </Link>
+                        <button
+                            v-if="row.active"
+                            type="button"
+                            class="ui-btn-ghost px-2 py-1.5 text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                            title="Desactivar"
+                            @click="requestDeactivate(row)"
+                        >
+                            <UiIcon name="trash" size="h-4 w-4" />
+                        </button>
+                    </div>
+                </template>
+            </DataTable>
+
             <Pagination :pagination="specialties" :filters="activeFilters" />
-        </section>
+        </div>
 
-        <section v-else class="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <p class="font-medium text-slate-700 dark:text-slate-200">No hay especialidades que coincidan con la búsqueda.</p>
-        </section>
+        <ConfirmDialog
+            :open="confirm.open"
+            :title="confirm.title"
+            :message="confirm.message"
+            :processing="loading"
+            confirm-label="Desactivar"
+            @cancel="confirm.open = false"
+            @confirm="executeConfirm"
+        />
     </AuthenticatedLayout>
 </template>
 
 <script>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import PageHeader from '@/Components/PageHeader.vue';
+import SearchInput from '@/Components/SearchInput.vue';
+import DataTable from '@/Components/DataTable.vue';
 import Pagination from '@/Components/Pagination.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+import UiIcon from '@/Components/UiIcon.vue';
 
 export default {
     components: {
-        AuthenticatedLayout,
         Head,
         Link,
+        AuthenticatedLayout,
+        PageHeader,
+        SearchInput,
+        DataTable,
         Pagination,
+        ConfirmDialog,
+        UiIcon,
     },
     props: {
-        specialties: {
-            type: Object,
-            required: true,
-        },
-        filters: {
-            type: Object,
-            default: () => ({}),
-        },
+        specialties: { type: Object, required: true },
+        filters: { type: Object, default: () => ({}) },
     },
     data() {
         return {
-            form: {
-                search: this.filters.search ?? '',
-            },
+            loading: false,
+            form: { search: this.filters.search ?? '' },
+            confirm: { open: false, title: '', message: '', specialtyId: null },
+            columns: [
+                { key: 'name', label: 'Especialidad' },
+                { key: 'slug', label: 'Slug' },
+                { key: 'doctors_count', label: 'Médicos', align: 'center' },
+                { key: 'sessions_count', label: 'Sesiones', align: 'center' },
+                { key: 'status', label: 'Estado' },
+                { key: 'actions', label: 'Acciones', align: 'right' },
+            ],
         };
     },
     computed: {
@@ -99,15 +142,32 @@ export default {
     },
     methods: {
         submit() {
+            this.loading = true;
             router.get(route('specialties.index'), this.form, {
                 preserveState: true,
                 preserveScroll: true,
                 replace: true,
+                onFinish: () => { this.loading = false; },
             });
         },
-        deactivate(specialty) {
-            if (!window.confirm(`¿Desactivar ${specialty.name}? No se eliminarán sus sesiones históricas.`)) return;
-            router.delete(route('specialties.destroy', specialty.id), { preserveScroll: true });
+        requestDeactivate(specialty) {
+            this.confirm = {
+                open: true,
+                title: 'Desactivar especialidad',
+                message: `¿Desactivar ${specialty.name}? No se eliminarán sus sesiones históricas.`,
+                specialtyId: specialty.id,
+            };
+        },
+        executeConfirm() {
+            if (!this.confirm.specialtyId) return;
+            this.loading = true;
+            router.delete(route('specialties.destroy', this.confirm.specialtyId), {
+                preserveScroll: true,
+                onFinish: () => {
+                    this.loading = false;
+                    this.confirm.open = false;
+                },
+            });
         },
     },
 };

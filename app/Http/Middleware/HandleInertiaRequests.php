@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Appointment;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -43,6 +44,24 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
+            'notifications' => fn () => $request->user() ? [
+                'pending' => Appointment::query()
+                    ->active()
+                    ->where('status', 'pending')
+                    ->when(
+                        ! $request->user()->isAdmin(),
+                        fn ($query) => $query->where('doctor_id', $request->user()->id)
+                    )
+                    ->count(),
+                'today' => Appointment::query()
+                    ->onDate(now()->toDateString())
+                    ->notCancelled()
+                    ->when(
+                        ! $request->user()->isAdmin(),
+                        fn ($query) => $query->where('doctor_id', $request->user()->id)
+                    )
+                    ->count(),
+            ] : null,
         ];
     }
 }

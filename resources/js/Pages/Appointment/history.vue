@@ -1,78 +1,99 @@
 <template>
-    <Head title="Historial de cita" />
+    <Head :title="`Historial de la cita #${appointment.id}`" />
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-slate-800 dark:text-white">Historial de la cita #{{ appointment.id }}</h1>
-                    <p class="text-sm text-slate-500">{{ appointment.patient?.name }} {{ appointment.patient?.last_name }} · Dr. {{ appointment.doctor?.name }} {{ appointment.doctor?.last_name }}</p>
-                </div>
-                <Link :href="route('appointments.show', appointment.id)" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 dark:border-slate-600 dark:text-slate-200">Volver al detalle</Link>
-            </div>
+            <PageHeader
+                eyebrow="Agenda clínica"
+                :title="`Historial de la cita #${appointment.id}`"
+                :description="`${fullName(appointment.patient)} · Dr. ${fullName(appointment.doctor)}`"
+            >
+                <template #actions>
+                    <Link :href="route('appointments.show', appointment.id)" class="ui-btn-secondary">
+                        <UiIcon name="arrow-left" size="h-4 w-4" />
+                        Volver al detalle
+                    </Link>
+                </template>
+            </PageHeader>
         </template>
 
-        <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div class="overflow-x-auto">
-                <table class="w-full min-w-[800px] text-left text-sm">
-                    <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                        <tr>
-                            <th class="px-4 py-3">Fecha del cambio</th>
-                            <th class="px-4 py-3">Estado anterior</th>
-                            <th class="px-4 py-3">Estado nuevo</th>
-                            <th class="px-4 py-3">Reprogramación</th>
-                            <th class="px-4 py-3">Usuario</th>
-                            <th class="px-4 py-3">Motivo</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                        <tr v-for="history in histories" :key="history.id">
-                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ history.created_at }}</td>
-                            <td class="px-4 py-3"><StatusBadge v-if="history.from_status" :status="history.from_status" /><span v-else class="text-slate-400">—</span></td>
-                            <td class="px-4 py-3"><StatusBadge :status="history.to_status" /></td>
-                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">
-                                <template v-if="history.from_date || history.to_date">
-                                    {{ formatDate(history.from_date) }} {{ formatTime(history.from_start) }}
-                                    → {{ formatDate(history.to_date) }} {{ formatTime(history.to_start) }}
-                                </template>
-                                <span v-else class="text-slate-400">—</span>
-                            </td>
-                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ history.actor?.name ?? 'Sistema' }}</td>
-                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ history.reason ?? '—' }}</td>
-                        </tr>
-                        <tr v-if="!histories.length">
-                            <td colspan="6" class="px-4 py-10 text-center text-slate-500">No hay movimientos registrados.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
+        <DataTable
+            :columns="columns"
+            :rows="histories"
+            empty-title="Sin movimientos"
+            empty-description="Esta cita todavía no registra cambios de estado."
+        >
+            <template #cell-created_at="{ row }">
+                {{ row.created_at }}
+            </template>
+
+            <template #cell-from_status="{ row }">
+                <StatusBadge v-if="row.from_status" :status="row.from_status" />
+                <span v-else class="text-slate-400 dark:text-slate-500">—</span>
+            </template>
+
+            <template #cell-to_status="{ row }">
+                <StatusBadge :status="row.to_status" />
+            </template>
+
+            <template #cell-reschedule="{ row }">
+                <span v-if="row.from_date || row.to_date" class="text-xs">
+                    {{ formatDate(row.from_date) }} {{ formatTime(row.from_start) }}
+                    → {{ formatDate(row.to_date) }} {{ formatTime(row.to_start) }}
+                </span>
+                <span v-else class="text-slate-400 dark:text-slate-500">—</span>
+            </template>
+
+            <template #cell-actor="{ row }">
+                {{ row.actor?.name ?? 'Sistema' }}
+            </template>
+
+            <template #cell-reason="{ row }">
+                {{ row.reason ?? '—' }}
+            </template>
+        </DataTable>
     </AuthenticatedLayout>
 </template>
 
 <script>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import PageHeader from '@/Components/PageHeader.vue';
+import DataTable from '@/Components/DataTable.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
+import UiIcon from '@/Components/UiIcon.vue';
 
 export default {
     components: {
-        AuthenticatedLayout,
         Head,
         Link,
+        AuthenticatedLayout,
+        PageHeader,
+        DataTable,
         StatusBadge,
+        UiIcon,
     },
     props: {
-        appointment: {
-            type: Object,
-            required: true,
-        },
-        histories: {
-            type: Array,
-            default: () => [],
-        },
+        appointment: { type: Object, required: true },
+        histories: { type: Array, default: () => [] },
+    },
+    data() {
+        return {
+            columns: [
+                { key: 'created_at', label: 'Fecha del cambio' },
+                { key: 'from_status', label: 'Estado anterior' },
+                { key: 'to_status', label: 'Estado nuevo' },
+                { key: 'reschedule', label: 'Reprogramación' },
+                { key: 'actor', label: 'Usuario' },
+                { key: 'reason', label: 'Motivo' },
+            ],
+        };
     },
     methods: {
+        fullName(person) {
+            if (!person) return '—';
+            return `${person.name ?? ''} ${person.last_name ?? ''}`.trim() || '—';
+        },
         formatDate(dateString) {
             if (!dateString) return '';
             return String(dateString).slice(0, 10);

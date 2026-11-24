@@ -3,6 +3,16 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="color-scheme" content="light dark">
+
+        <script>
+            (function () {
+                const stored = localStorage.getItem('theme');
+                const dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.classList.toggle('dark', dark);
+                document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+            })();
+        </script>
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 

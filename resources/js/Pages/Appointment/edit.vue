@@ -3,62 +3,77 @@
 
     <AuthenticatedLayout>
         <template #header>
-            <h1 class="text-2xl font-bold text-slate-800 dark:text-white">Editar cita #{{ appointments.id }}</h1>
-            <p class="text-sm text-slate-500">La reprogramación valida sesión, capacidad y solapamientos en el servidor.</p>
+            <PageHeader
+                eyebrow="Agenda clínica"
+                :title="`Editar cita #${appointments.id}`"
+                description="La reprogramación valida sesión, capacidad y solapamientos en el servidor."
+            >
+                <template #actions>
+                    <StatusBadge :status="appointments.status" />
+                </template>
+            </PageHeader>
         </template>
 
-        <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <section class="ui-card p-6">
             <form @submit.prevent="submit" class="space-y-6">
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <div>
-                        <label for="patient" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Paciente *</label>
-                        <select id="patient" v-model="form.patient_id" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
-                            <option v-for="patient in patients" :key="patient.id" :value="patient.id">{{ patient.name }} {{ patient.last_name }}</option>
+                    <FormField label="Paciente" name="patient" required :error="errors.patient_id">
+                        <select id="patient" v-model="form.patient_id" class="ui-input">
+                            <option v-for="patient in patients" :key="patient.id" :value="patient.id">
+                                {{ patient.name }} {{ patient.last_name }}
+                            </option>
                         </select>
-                        <InputError :message="errors.patient_id" class="mt-1" />
-                    </div>
-                    <div>
-                        <label for="doctor" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Médico *</label>
-                        <select id="doctor" v-model="form.doctor_id" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
-                            <option v-for="doctor in doctors" :key="doctor.id" :value="doctor.id">Dr. {{ doctor.name }} {{ doctor.last_name }}</option>
+                    </FormField>
+
+                    <FormField label="Médico" name="doctor" required :error="errors.doctor_id">
+                        <select id="doctor" v-model="form.doctor_id" class="ui-input">
+                            <option v-for="doctor in doctors" :key="doctor.id" :value="doctor.id">
+                                Dr. {{ doctor.name }} {{ doctor.last_name }}
+                            </option>
                         </select>
-                        <InputError :message="errors.doctor_id" class="mt-1" />
-                    </div>
-                    <div>
-                        <label for="specialty" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Especialidad</label>
-                        <select id="specialty" v-model="form.specialty_id" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                    </FormField>
+
+                    <FormField label="Especialidad" name="specialty">
+                        <select id="specialty" v-model="form.specialty_id" class="ui-input">
                             <option value="">Sin especialidad</option>
-                            <option v-for="specialty in specialties" :key="specialty.id" :value="specialty.id">{{ specialty.name }}</option>
+                            <option v-for="specialty in specialties" :key="specialty.id" :value="specialty.id">
+                                {{ specialty.name }}
+                            </option>
                         </select>
-                    </div>
-                    <div>
-                        <label for="session" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Sesión médica</label>
-                        <select id="session" v-model="form.session_id" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" @change="onSessionChange">
+                    </FormField>
+
+                    <FormField label="Sesión médica" name="session" :error="errors.session_id">
+                        <select id="session" v-model="form.session_id" class="ui-input" @change="onSessionChange">
                             <option value="">Cita independiente</option>
-                            <option v-for="session in sessions" :key="session.id" :value="session.id">{{ session.title }} · {{ formatDate(session.date) }}</option>
+                            <option v-for="session in sessions" :key="session.id" :value="session.id">
+                                {{ session.title }} · {{ formatDate(session.date) }}
+                            </option>
                         </select>
-                        <InputError :message="errors.session_id" class="mt-1" />
-                    </div>
-                    <div>
-                        <label for="date" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Fecha *</label>
-                        <input id="date" v-model="form.date" type="date" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
-                        <InputError :message="errors.date" class="mt-1" />
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label for="starttime" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Inicio *</label>
-                            <input id="starttime" v-model="form.starttime" type="time" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
+                    </FormField>
+
+                    <FormField label="Fecha" name="date" required :error="errors.date">
+                        <input id="date" v-model="form.date" type="date" class="ui-input" />
+                    </FormField>
+
+                    <FormField label="Horario" name="starttime" required :error="errors.starttime || errors.endtime">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <span class="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-400">Inicio</span>
+                                <input id="starttime" v-model="form.starttime" type="time" class="ui-input" />
+                            </div>
+                            <div>
+                                <span class="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-400">Fin</span>
+                                <input id="endtime" v-model="form.endtime" type="time" class="ui-input" />
+                            </div>
                         </div>
-                        <div>
-                            <label for="endtime" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Fin *</label>
-                            <input id="endtime" v-model="form.endtime" type="time" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
-                        </div>
-                        <InputError :message="errors.starttime" class="mt-1 col-span-2" />
-                    </div>
+                    </FormField>
                 </div>
 
-                <div v-if="slots.length" class="rounded-lg bg-slate-50 p-4 dark:bg-slate-800">
-                    <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Espacios de la sesión</p>
+                <section v-if="slots.length" class="rounded-lg bg-slate-50 p-4 dark:bg-slate-800/50">
+                    <div class="mb-2 flex items-center gap-2">
+                        <UiIcon name="clock" size="h-4 w-4" class="text-brand-600 dark:text-brand-400" />
+                        <p class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Espacios de la sesión</p>
+                    </div>
                     <div class="flex flex-wrap gap-2">
                         <button
                             v-for="slot in slots"
@@ -66,109 +81,92 @@
                             type="button"
                             :disabled="!slot.available"
                             :title="slot.reason ?? ''"
-                            class="rounded-lg border px-2 py-1 text-xs font-medium"
+                            class="rounded-lg border px-2 py-1 text-xs font-medium transition"
                             :class="form.starttime === slot.start
-                                ? 'border-blue-600 bg-blue-600 text-white'
+                                ? 'border-brand-600 bg-brand-600 text-white'
                                 : slot.available
-                                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200'
+                                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300'
                                     : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-900'"
                             @click="chooseSlot(slot)"
-                        >{{ formatTime(slot.start) }}–{{ formatTime(slot.end) }}</button>
+                        >
+                            {{ formatTime(slot.start) }}–{{ formatTime(slot.end) }}
+                        </button>
                     </div>
-                </div>
+                </section>
 
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <div class="sm:col-span-2">
-                        <label for="title" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Motivo *</label>
-                        <input id="title" v-model="form.title" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
-                        <InputError :message="errors.title" class="mt-1" />
-                    </div>
-                    <div>
-                        <label for="drug" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Medicamento</label>
-                        <select id="drug" v-model="form.drug_id" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                    <FormField label="Motivo" name="title" required :error="errors.title" class="sm:col-span-2">
+                        <input id="title" v-model="form.title" type="text" class="ui-input" />
+                    </FormField>
+
+                    <FormField label="Medicamento" name="drug">
+                        <select id="drug" v-model="form.drug_id" class="ui-input">
                             <option value="">Sin medicamento</option>
                             <option v-for="drug in drugs" :key="drug.id" :value="drug.id">{{ drug.name }}</option>
                         </select>
-                    </div>
-                    <div>
-                        <label for="status" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Estado</label>
-                        <select id="status" v-model="form.status" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+                    </FormField>
+
+                    <FormField label="Estado" name="status" :error="errors.status">
+                        <select id="status" v-model="form.status" class="ui-input">
                             <option value="">Sin cambio</option>
-                            <option v-for="transition in transitions" :key="transition.value" :value="transition.value">{{ transition.label }}</option>
+                            <option v-for="transition in transitions" :key="transition.value" :value="transition.value">
+                                {{ transition.label }}
+                            </option>
                         </select>
-                        <InputError :message="errors.status" class="mt-1" />
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label for="reason" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Motivo del cambio</label>
-                        <input id="reason" v-model="form.reason" type="text" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white" />
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label for="notes" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Notas</label>
-                        <textarea id="notes" v-model="form.notes" rows="3" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white"></textarea>
-                    </div>
+                    </FormField>
+
+                    <FormField label="Motivo del cambio" name="reason" class="sm:col-span-2">
+                        <input id="reason" v-model="form.reason" type="text" class="ui-input" />
+                    </FormField>
+
+                    <FormField label="Notas" name="notes" class="sm:col-span-2">
+                        <textarea id="notes" v-model="form.notes" rows="3" class="ui-input" />
+                    </FormField>
                 </div>
 
-                <div class="flex flex-wrap justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-700">
-                    <Link :href="route('appointments.show', appointments.id)" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 dark:border-slate-600 dark:text-slate-200">Cancelar</Link>
-                    <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Guardar cambios</button>
-                </div>
+                <FormActions
+                    :cancel-href="route('appointments.show', appointments.id)"
+                    label="Guardar cambios"
+                    :processing="processing"
+                />
             </form>
         </section>
     </AuthenticatedLayout>
 </template>
 
 <script>
+import { Head, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
-import InputError from '@/Components/InputError.vue';
+import PageHeader from '@/Components/PageHeader.vue';
+import FormField from '@/Components/FormField.vue';
+import FormActions from '@/Components/FormActions.vue';
+import StatusBadge from '@/Components/StatusBadge.vue';
+import UiIcon from '@/Components/UiIcon.vue';
 
 export default {
     components: {
-        AuthenticatedLayout,
         Head,
-        Link,
-        InputError,
+        AuthenticatedLayout,
+        PageHeader,
+        FormField,
+        FormActions,
+        StatusBadge,
+        UiIcon,
     },
     props: {
-        appointments: {
-            type: Object,
-            required: true,
-        },
-        patients: {
-            type: Array,
-            default: () => [],
-        },
-        doctors: {
-            type: Array,
-            default: () => [],
-        },
-        specialties: {
-            type: Array,
-            default: () => [],
-        },
-        sessions: {
-            type: Array,
-            default: () => [],
-        },
-        drugs: {
-            type: Array,
-            default: () => [],
-        },
-        statuses: {
-            type: Array,
-            default: () => [],
-        },
-        transitions: {
-            type: Array,
-            default: () => [],
-        },
-        availability: {
-            type: Object,
-            default: () => ({}),
-        },
+        appointments: { type: Object, required: true },
+        patients: { type: Array, default: () => [] },
+        doctors: { type: Array, default: () => [] },
+        specialties: { type: Array, default: () => [] },
+        sessions: { type: Array, default: () => [] },
+        drugs: { type: Array, default: () => [] },
+        statuses: { type: Array, default: () => [] },
+        transitions: { type: Array, default: () => [] },
+        availability: { type: Object, default: () => ({}) },
     },
     data() {
         return {
+            processing: false,
             form: {
                 title: this.appointments.title ?? '',
                 notes: this.appointments.notes ?? '',
@@ -233,8 +231,10 @@ export default {
             this.form.endtime = slot.end;
         },
         submit() {
+            this.processing = true;
             router.put(route('appointments.update', this.appointments.id), this.form, {
                 preserveScroll: true,
+                onFinish: () => { this.processing = false; },
             });
         },
         formatDate(dateString) {

@@ -92,8 +92,8 @@ const paginationLinks = computed(() => {
 </script>
 
 <template>
-    <div class="flex flex-col sm:flex-row items-center justify-between py-3 px-4 bg-white dark:bg-gray-800">
-        <div class="text-sm text-gray-700 dark:text-gray-300 mb-2 sm:mb-0">
+    <div class="flex flex-col items-center justify-between gap-3 border-t border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 sm:flex-row">
+        <div class="text-sm text-slate-500 dark:text-slate-400">
             Mostrando
             <span class="font-medium">{{ ((pagination.current_page - 1) * pagination.per_page) + 1 }}</span>
             a
@@ -105,17 +105,17 @@ const paginationLinks = computed(() => {
             resultados
         </div>
 
-        <div class="inline-flex space-x-1">
+        <div class="flex flex-wrap items-center justify-center gap-1">
             <!-- Botón Anterior -->
             <template v-if="pagination.prev_page_url">
                 <Link :href="buildUrl(pagination.prev_page_url)" preserve-scroll preserve-state
-                    class="px-3 py-1 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-900">
+                    class="ui-btn-secondary px-3 py-1.5 text-xs">
                 Anterior
                 </Link>
             </template>
             <template v-else>
                 <button disabled
-                    class="px-3 py-1 rounded-md text-sm font-medium text-gray-400 dark:text-gray-500 bg-gray-200 dark:bg-gray-800 cursor-not-allowed opacity-50">
+                    class="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-400 opacity-60 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-600">
                     Anterior
                 </button>
             </template>
@@ -124,25 +124,25 @@ const paginationLinks = computed(() => {
             <template v-for="(link, index) in paginationLinks" :key="index">
                 <template v-if="link.url">
                     <Link :href="link.url" preserve-scroll :class="{
-                        'bg-primary-500 dark:bg-primary-600 dark:text-white': link.active,
-                        'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600': !link.active
-                    }" class="px-3 py-1 rounded-md text-sm font-medium" v-html="link.label" />
+                        'border-brand-600 bg-brand-600 text-white': link.active,
+                        'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800': !link.active
+                    }" class="inline-flex min-w-8 items-center justify-center rounded-lg border px-3 py-1.5 text-xs font-semibold" v-html="link.label" />
                 </template>
                 <template v-else>
-                    <span class="px-3 py-1 text-sm text-gray-700 dark:text-gray-300">{{ link.label }}</span>
+                    <span class="px-2 py-1.5 text-xs text-slate-400">{{ link.label }}</span>
                 </template>
             </template>
 
             <!-- Botón Siguiente -->
             <template v-if="pagination.next_page_url">
                 <Link :href="buildUrl(pagination.next_page_url)" preserve-scroll preserve-state
-                    class="px-3 py-1 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-900">
+                    class="ui-btn-secondary px-3 py-1.5 text-xs">
                 Siguiente
                 </Link>
             </template>
             <template v-else>
                 <button disabled
-                    class="px-3 py-1 rounded-md text-sm font-medium text-gray-400 dark:text-gray-500 bg-gray-200 dark:bg-gray-800 cursor-not-allowed opacity-50">
+                    class="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-400 opacity-60 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-600">
                     Siguiente
                 </button>
             </template>

@@ -1,143 +1,112 @@
-<script setup>
-import Checkbox from '@/Components/Checkbox.vue';
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
-
-defineProps({
-    canResetPassword: {
-        type: Boolean,
-    },
-    status: {
-        type: String,
-    },
-});
-
-const form = useForm({
-    email: '',
-    password: '',
-    remember: false,
-});
-
-const submit = () => {
-    form.post(route('login'), {
-        onFinish: () => form.reset('password'),
-    });
-};
-</script>
-
 <template>
     <GuestLayout>
-        <Head title="Log in" />
+        <Head title="Iniciar sesión" />
 
-        <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4">
-            <div class="w-full max-w-md space-y-8">
-                <div class="text-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
-                    </svg>
-                    <h2 class="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
-                        Welcome back
-                    </h2>
-                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                        Sign in to your account
-                    </p>
-                </div>
-
-                <div v-if="status" class="p-4 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-lg text-center">
-                    {{ status }}
-                </div>
-
-                <div class="bg-white dark:bg-gray-800/80 backdrop-blur-sm shadow-xl rounded-xl p-8 border border-white/20 dark:border-gray-700/30">
-                    <form @submit.prevent="submit" class="space-y-6">
-                        <div>
-                            <InputLabel for="email" value="Email address" class="block text-sm font-medium text-gray-700 dark:text-gray-300" />
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                                    </svg>
-                                </div>
-                                <TextInput
-                                    id="email"
-                                    type="email"
-                                    class="block w-full pl-10 pr-3 py-2.5 border-0 bg-gray-50/50 dark:bg-gray-700/50 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white"
-                                    placeholder="you@example.com"
-                                    v-model="form.email"
-                                    required
-                                    autofocus
-                                    autocomplete="username"
-                                />
-                            </div>
-                            <InputError class="mt-2" :message="form.errors.email" />
-                        </div>
-
-                        <div>
-                            <InputLabel for="password" value="Password" class="block text-sm font-medium text-gray-700 dark:text-gray-300" />
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
-                                    </svg>
-                                </div>
-                                <TextInput
-                                    id="password"
-                                    type="password"
-                                    class="block w-full pl-10 pr-3 py-2.5 border-0 bg-gray-50/50 dark:bg-gray-700/50 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white"
-                                    placeholder="••••••••"
-                                    v-model="form.password"
-                                    required
-                                    autocomplete="current-password"
-                                />
-                            </div>
-                            <InputError class="mt-2" :message="form.errors.password" />
-                        </div>
-
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <Checkbox 
-                                    name="remember" 
-                                    v-model:checked="form.remember" 
-                                    class="h-4 w-4 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 rounded"
-                                />
-                                <InputLabel for="remember" value="Remember me" class="ml-2 block text-sm text-gray-700 dark:text-gray-300" />
-                            </div>
-
-                            <div class="text-sm">
-                                <Link
-                                    v-if="canResetPassword"
-                                    :href="route('password.request')"
-                                    class="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300"
-                                >
-                                    Forgot password?
-                                </Link>
-                            </div>
-                        </div>
-
-                        <div>
-                            <PrimaryButton 
-                                class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
-                                :class="{ 'opacity-50 cursor-not-allowed': form.processing }" 
-                                :disabled="form.processing"
-                            >
-                                <svg v-if="form.processing" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <span>{{ form.processing ? 'Signing in...' : 'Sign in' }}</span>
-                            </PrimaryButton>
-                        </div>
-                    </form>
-
-                    <div class="mt-6 rounded-lg bg-gray-50 px-4 py-3 text-center text-sm text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                        ¿No tiene una cuenta? Contacte al administrador del sistema.
-                    </div>
-                </div>
-            </div>
+        <div class="mb-6 text-center">
+            <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-300">
+                <UiIcon name="heart" size="h-6 w-6" />
+            </span>
+            <h1 class="mt-4 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Bienvenido de nuevo</h1>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                Ingrese sus credenciales para acceder a la plataforma clínica.
+            </p>
         </div>
+
+        <div
+            v-if="status"
+            class="mb-5 flex items-start gap-2 rounded-lg bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/20"
+            role="status"
+        >
+            <UiIcon name="check" size="h-4 w-4" class="mt-0.5 shrink-0" />
+            <span>{{ status }}</span>
+        </div>
+
+        <form class="space-y-5" @submit.prevent="submit">
+            <FormField label="Correo electrónico" name="email" required :error="form.errors.email">
+                <input
+                    id="email"
+                    v-model="form.email"
+                    type="email"
+                    class="ui-input"
+                    placeholder="nombre@correo.com"
+                    required
+                    autofocus
+                    autocomplete="username"
+                />
+            </FormField>
+
+            <FormField label="Contraseña" name="password" required :error="form.errors.password">
+                <input
+                    id="password"
+                    v-model="form.password"
+                    type="password"
+                    class="ui-input"
+                    placeholder="••••••••"
+                    required
+                    autocomplete="current-password"
+                />
+            </FormField>
+
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <label for="remember" class="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                    <input
+                        id="remember"
+                        v-model="form.remember"
+                        type="checkbox"
+                        class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-600 dark:bg-slate-900"
+                    />
+                    Recordarme
+                </label>
+
+                <Link
+                    v-if="canResetPassword"
+                    :href="route('password.request')"
+                    class="text-sm font-semibold text-brand-600 hover:underline dark:text-brand-400"
+                >
+                    ¿Olvidó su contraseña?
+                </Link>
+            </div>
+
+            <button type="submit" class="ui-btn-primary w-full" :disabled="form.processing">
+                <span v-if="form.processing" class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true" />
+                <UiIcon v-else name="logout" size="h-4 w-4" />
+                {{ form.processing ? 'Ingresando...' : 'Iniciar sesión' }}
+            </button>
+        </form>
+
+        <p class="mt-6 rounded-lg bg-slate-50 px-4 py-3 text-center text-xs text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+            ¿No tiene una cuenta? Contacte al administrador del sistema.
+        </p>
     </GuestLayout>
 </template>
+
+<script>
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import GuestLayout from '@/Layouts/GuestLayout.vue';
+import FormField from '@/Components/FormField.vue';
+import UiIcon from '@/Components/UiIcon.vue';
+
+export default {
+    name: 'Login',
+    components: { Head, Link, GuestLayout, FormField, UiIcon },
+    props: {
+        canResetPassword: { type: Boolean, default: false },
+        status: { type: String, default: '' },
+    },
+    setup() {
+        const form = useForm({
+            email: '',
+            password: '',
+            remember: false,
+        });
+
+        const submit = () => {
+            form.post(route('login'), {
+                onFinish: () => form.reset('password'),
+            });
+        };
+
+        return { form, submit };
+    },
+};
+</script>

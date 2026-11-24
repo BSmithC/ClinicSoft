@@ -1,82 +1,60 @@
 <template>
-    <div
-        class="relative flex flex-col min-w-0 break-words bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-        <div class="flex-auto p-5">
-            <div class="flex flex-wrap items-center">
-                <div class="relative w-full pr-4 max-w-full flex-grow flex-1">
-                    <h5 class="text-gray-500 dark:text-gray-300 uppercase font-bold text-xs tracking-wider">
-                        {{ statSubtitle }}
-                    </h5>
-                    <span class="font-semibold text-2xl text-gray-800 dark:text-white block mt-1">
-                        {{ statTitle }}
-                    </span>
-                </div>
-                <div class="relative w-auto pl-4 flex-initial">
-                    <div :class="[
-                        'text-white p-3 text-center inline-flex items-center justify-center w-12 h-12 shadow-lg rounded-full',
-                        statIconColor
-                    ]">
-                        <i :class="statIconName" class="text-lg"></i>
-                    </div>
-                </div>
+    <div class="ui-card p-5">
+        <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {{ statSubtitle }}
+                </p>
+                <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
+                    {{ statTitle }}
+                </p>
             </div>
-            <p v-if="showTrend" class="text-sm text-gray-500 dark:text-gray-300 mt-4">
-                <span :class="statPercentColor" class="font-semibold">
-                    <i :class="[
-                        statArrow === 'up' ? 'fas fa-arrow-up' : 'fas fa-arrow-down',
-                        'mr-1'
-                    ]"></i>
-                    {{ statPercent }}%
-                </span>
-                <span class="whitespace-nowrap ml-1">
-                    {{ statDescripition }}
-                </span>
-            </p>
+            <span
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white"
+                :class="statIconColor"
+            >
+                <UiIcon :name="iconName" size="h-5 w-5" />
+            </span>
         </div>
+
+        <p v-if="showTrend" class="mt-4 text-sm text-slate-500 dark:text-slate-400">
+            <span class="inline-flex items-center gap-1 font-semibold" :class="statPercentColor">
+                <UiIcon
+                    name="chevron-down"
+                    size="h-3.5 w-3.5"
+                    :class="statArrow === 'up' ? 'rotate-180' : ''"
+                />
+                {{ statPercent }}%
+            </span>
+            <span class="ms-1">{{ statDescripition }}</span>
+        </p>
     </div>
 </template>
 
 <script>
+import UiIcon from '@/Components/UiIcon.vue';
+
 export default {
-    name: "CardStats",
+    name: 'CardStats',
+    components: { UiIcon },
     props: {
-        statSubtitle: {
-            type: String,
-            default: "Pacientes",
-        },
-        statTitle: {
-            type: [String, Number],
-            default: "2,356",
-        },
+        statSubtitle: { type: String, default: 'Pacientes' },
+        statTitle: { type: [String, Number], default: 0 },
         statArrow: {
-            default: "up",
-            validator: function (value) {
-                return ["up", "down"].indexOf(value) !== -1;
-            },
-        },
-        statPercent: {
             type: String,
-            default: "12",
+            default: 'up',
+            validator: (value) => ['up', 'down'].includes(value),
         },
-        statPercentColor: {
-            type: String,
-            default: "text-emerald-500",
-        },
-        statDescripition: {
-            type: String,
-            default: "Desde el mes pasado",
-        },
-        showTrend: {
-            type: Boolean,
-            default: true,
-        },
-        statIconName: {
-            type: String,
-            default: "fas fa-user-injured",
-        },
-        statIconColor: {
-            type: String,
-            default: "bg-blue-500",
+        statPercent: { type: [String, Number], default: 0 },
+        statPercentColor: { type: String, default: 'text-emerald-600 dark:text-emerald-400' },
+        statDescripition: { type: String, default: 'Respecto al periodo anterior' },
+        showTrend: { type: Boolean, default: false },
+        statIconName: { type: String, default: 'users' },
+        statIconColor: { type: String, default: 'bg-brand-600' },
+    },
+    computed: {
+        iconName() {
+            return this.statIconName || 'users';
         },
     },
 };

@@ -1,102 +1,99 @@
-<script setup>
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Link, useForm, usePage } from '@inertiajs/vue3';
-
-defineProps({
-    mustVerifyEmail: {
-        type: Boolean,
-    },
-    status: {
-        type: String,
-    },
-});
-
-const user = usePage().props.auth.user;
-
-const form = useForm({
-    name: user.name,
-    email: user.email,
-});
-</script>
-
 <template>
-    <section>
+    <section class="space-y-5">
         <header>
-            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Profile Information</h2>
-
-            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                Update your account's profile information and email address.
+            <p class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Datos personales</p>
+            <h2 class="mt-1 text-lg font-bold text-slate-900 dark:text-white">Información del perfil</h2>
+            <p class="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                Actualice su nombre y correo electrónico.
             </p>
         </header>
 
-        <form @submit.prevent="form.patch(route('profile.update'))" class="mt-6 space-y-6">
-            <div>
-                <InputLabel for="name" value="Name" />
-
-                <TextInput
+        <form class="space-y-5" @submit.prevent="save">
+            <FormField label="Nombre" name="name" required :error="form.errors.name">
+                <input
                     id="name"
-                    type="text"
-                    class="mt-1 block w-full"
                     v-model="form.name"
+                    type="text"
+                    class="ui-input"
                     required
                     autofocus
                     autocomplete="name"
                 />
+            </FormField>
 
-                <InputError class="mt-2" :message="form.errors.name" />
-            </div>
-
-            <div>
-                <InputLabel for="email" value="Email" />
-
-                <TextInput
+            <FormField label="Correo electrónico" name="email" required :error="form.errors.email">
+                <input
                     id="email"
-                    type="email"
-                    class="mt-1 block w-full"
                     v-model="form.email"
+                    type="email"
+                    class="ui-input"
                     required
                     autocomplete="username"
                 />
+            </FormField>
 
-                <InputError class="mt-2" :message="form.errors.email" />
-            </div>
-
-            <div v-if="mustVerifyEmail && user.email_verified_at === null">
-                <p class="text-sm mt-2 text-gray-800 dark:text-gray-200">
-                    Your email address is unverified.
+            <div v-if="mustVerifyEmail && user.email_verified_at === null" class="rounded-lg bg-amber-50 p-4 text-sm text-amber-800 ring-1 ring-inset ring-amber-200 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/20">
+                <p>
+                    Su correo electrónico todavía no está verificado.
                     <Link
                         :href="route('verification.send')"
                         method="post"
                         as="button"
-                        class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
+                        class="ms-1 font-semibold underline hover:no-underline"
                     >
-                        Click here to re-send the verification email.
+                        Reenviar correo de verificación
                     </Link>
                 </p>
-
-                <div
-                    v-show="status === 'verification-link-sent'"
-                    class="mt-2 font-medium text-sm text-green-600 dark:text-green-400"
-                >
-                    A new verification link has been sent to your email address.
-                </div>
+                <p v-if="status === 'verification-link-sent'" class="mt-2 font-medium">
+                    Enviamos un nuevo enlace de verificación a su correo.
+                </p>
             </div>
 
-            <div class="flex items-center gap-4">
-                <PrimaryButton :disabled="form.processing">Save</PrimaryButton>
-
+            <div class="flex flex-wrap items-center gap-4 border-t border-slate-200 pt-5 dark:border-slate-800">
+                <button type="submit" class="ui-btn-primary" :disabled="form.processing">
+                    <UiIcon name="check" size="h-4 w-4" />
+                    Guardar cambios
+                </button>
                 <Transition
                     enter-active-class="transition ease-in-out"
                     enter-from-class="opacity-0"
                     leave-active-class="transition ease-in-out"
                     leave-to-class="opacity-0"
                 >
-                    <p v-if="form.recentlySuccessful" class="text-sm text-gray-600 dark:text-gray-400">Saved.</p>
+                    <p v-if="form.recentlySuccessful" class="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                        <UiIcon name="check" size="h-4 w-4" />
+                        Guardado
+                    </p>
                 </Transition>
             </div>
         </form>
     </section>
 </template>
+
+<script>
+import { Link, useForm, usePage } from '@inertiajs/vue3';
+import FormField from '@/Components/FormField.vue';
+import UiIcon from '@/Components/UiIcon.vue';
+
+export default {
+    name: 'UpdateProfileInformationForm',
+    components: { Link, FormField, UiIcon },
+    props: {
+        mustVerifyEmail: { type: Boolean, default: false },
+        status: { type: String, default: '' },
+    },
+    setup() {
+        const user = usePage().props.auth.user;
+        const form = useForm({
+            name: user.name,
+            email: user.email,
+        });
+
+        const save = () => {
+            form.patch(route('profile.update'), { preserveScroll: true });
+        };
+
+        return { user, form, save };
+    },
+};
+</script>

@@ -3,100 +3,182 @@
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-slate-800 dark:text-white">Médicos</h1>
-                    <p class="text-sm text-slate-500">Perfiles clínicos registrados en el sistema.</p>
-                </div>
-                <Link v-if="canCreate" :href="route('doctors.create')" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Nuevo médico</Link>
-            </div>
+            <PageHeader
+                eyebrow="Gestión clínica"
+                title="Médicos"
+                description="Perfiles clínicos registrados en el sistema."
+            >
+                <template #actions>
+                    <Link v-if="canCreate" :href="route('doctors.create')" class="ui-btn-primary">
+                        <UiIcon name="plus" size="h-4 w-4" />
+                        Nuevo médico
+                    </Link>
+                </template>
+            </PageHeader>
         </template>
 
-        <section class="mb-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div class="flex flex-col gap-3 sm:flex-row">
-                <input v-model="form.search" type="search" placeholder="Buscar por nombre o correo" class="w-full rounded-lg border-slate-300 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white" @keyup.enter="submit" />
-                <select v-model="form.active" class="rounded-lg border-slate-300 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-white" @change="submit">
-                    <option value="">Todos</option>
-                    <option value="1">Activos</option>
-                    <option value="0">Inactivos</option>
-                </select>
-                <button type="button" class="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white dark:bg-slate-700" @click="submit">Buscar</button>
-            </div>
-        </section>
+        <div class="space-y-5">
+            <section class="ui-card flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+                <SearchInput
+                    v-model="form.search"
+                    placeholder="Buscar por nombre o correo"
+                    input-id="doctors-search"
+                    class="sm:flex-1"
+                    width="w-full"
+                    @search="submit"
+                />
+                <FilterDropdown
+                    v-model="form.active"
+                    name="active"
+                    label="Estado"
+                    placeholder="Todos los estados"
+                    :options="statusOptions"
+                    width="w-full sm:w-52"
+                    @update:model-value="submit"
+                />
+                <button type="button" class="ui-btn-primary w-full sm:w-auto" :disabled="loading" @click="submit">
+                    <UiIcon name="search" size="h-4 w-4" />
+                    Buscar
+                </button>
+            </section>
 
-        <section v-if="doctors.data.length" class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div class="overflow-x-auto">
-                <table class="w-full min-w-[800px] text-left text-sm">
-                    <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                        <tr>
-                            <th class="px-4 py-3">Médico</th>
-                            <th class="px-4 py-3">Licencia</th>
-                            <th class="px-4 py-3">Especialidades</th>
-                            <th class="px-4 py-3">Estado</th>
-                            <th class="px-4 py-3">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                        <tr v-for="doctor in doctors.data" :key="doctor.id">
-                            <td class="px-4 py-3">
-                                <Link :href="route('doctors.show', doctor.id)" class="font-semibold text-blue-600 hover:underline dark:text-blue-400">Dr. {{ doctor.user?.name }} {{ doctor.user?.last_name }}</Link>
-                                <p class="text-xs text-slate-500">{{ doctor.user?.email }}</p>
-                            </td>
-                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ doctor.license_number || '—' }}</td>
-                            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ (doctor.specialties ?? []).map(item => item.name).join(', ') || '—' }}</td>
-                            <td class="px-4 py-3">
-                                <span class="rounded-full px-2 py-1 text-xs font-semibold" :class="doctor.active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200'">
-                                    {{ doctor.active ? 'Activo' : 'Inactivo' }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="flex flex-wrap gap-3 text-xs font-semibold">
-                                    <Link :href="route('doctors.agenda', doctor.id)" class="text-sky-600 hover:underline">Agenda</Link>
-                                    <Link :href="route('doctors.edit', doctor.id)" class="text-amber-600 hover:underline">Editar</Link>
-                                    <button v-if="doctor.active" type="button" class="text-rose-600 hover:underline" @click="deactivate(doctor)">Desactivar</button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <DataTable
+                :columns="columns"
+                :rows="doctors.data"
+                :loading="loading"
+                empty-title="No hay médicos"
+                empty-description="No hay perfiles que coincidan con los filtros seleccionados."
+            >
+                <template #cell-doctor="{ row }">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-xs font-bold text-sky-600 dark:bg-sky-500/10 dark:text-sky-300">
+                            {{ initials(row.user) }}
+                        </span>
+                        <div class="min-w-0">
+                            <Link :href="route('doctors.show', row.id)" class="block truncate font-semibold text-slate-800 hover:text-brand-600 dark:text-white dark:hover:text-brand-400">
+                                Dr. {{ row.user?.name }} {{ row.user?.last_name }}
+                            </Link>
+                            <p class="truncate text-xs text-slate-500 dark:text-slate-400">{{ row.user?.email }}</p>
+                        </div>
+                    </div>
+                </template>
+
+                <template #cell-status="{ row }">
+                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset" :class="row.active
+                        ? 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/20'
+                        : 'bg-rose-50 text-rose-700 ring-rose-200 dark:bg-rose-400/10 dark:text-rose-300 dark:ring-rose-400/20'">
+                        <span class="h-1.5 w-1.5 rounded-full bg-current" />
+                        {{ row.active ? 'Activo' : 'Inactivo' }}
+                    </span>
+                </template>
+
+                <template #cell-actions="{ row }">
+                    <div class="flex items-center justify-end gap-1">
+                        <button type="button" class="ui-btn-ghost px-2 py-1.5" title="Ver detalle" @click="openDrawer(row)">
+                            <UiIcon name="eye" size="h-4 w-4" />
+                        </button>
+                        <Link :href="route('doctors.agenda', row.id)" class="ui-btn-ghost px-2 py-1.5" title="Agenda">
+                            <UiIcon name="calendar" size="h-4 w-4" />
+                        </Link>
+                        <Link v-if="canCreate" :href="route('doctors.edit', row.id)" class="ui-btn-ghost px-2 py-1.5" title="Editar">
+                            <UiIcon name="pencil" size="h-4 w-4" />
+                        </Link>
+                        <button
+                            v-if="canCreate && row.active"
+                            type="button"
+                            class="ui-btn-ghost px-2 py-1.5 text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                            title="Desactivar"
+                            @click="requestDeactivate(row)"
+                        >
+                            <UiIcon name="trash" size="h-4 w-4" />
+                        </button>
+                    </div>
+                </template>
+            </DataTable>
+
             <Pagination :pagination="doctors" :filters="activeFilters" />
-        </section>
+        </div>
 
-        <section v-else class="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <p class="font-medium text-slate-700 dark:text-slate-200">No hay médicos para los filtros seleccionados.</p>
-        </section>
+        <DetailDrawer :open="drawerOpen" title="Detalle del médico" :subtitle="selected?.user?.email ?? ''" @close="drawerOpen = false">
+            <template v-if="selected">
+                <dl class="space-y-4">
+                    <div v-for="item in drawerFields" :key="item.label" class="flex items-start justify-between gap-4 border-b border-slate-100 pb-3 last:border-0 dark:border-slate-800">
+                        <dt class="text-sm text-slate-500 dark:text-slate-400">{{ item.label }}</dt>
+                        <dd class="text-end text-sm font-medium text-slate-800 dark:text-white">{{ item.value }}</dd>
+                    </div>
+                </dl>
+            </template>
+            <template #footer>
+                <div class="flex flex-wrap justify-end gap-2">
+                    <Link :href="route('doctors.agenda', selected?.id)" class="ui-btn-secondary">Ver agenda</Link>
+                    <Link v-if="canCreate" :href="route('doctors.edit', selected?.id)" class="ui-btn-primary">Editar médico</Link>
+                </div>
+            </template>
+        </DetailDrawer>
+
+        <ConfirmDialog
+            :open="confirm.open"
+            :title="confirm.title"
+            :message="confirm.message"
+            :processing="loading"
+            confirm-label="Desactivar"
+            @cancel="confirm.open = false"
+            @confirm="executeConfirm"
+        />
     </AuthenticatedLayout>
 </template>
 
 <script>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import PageHeader from '@/Components/PageHeader.vue';
+import SearchInput from '@/Components/SearchInput.vue';
+import FilterDropdown from '@/Components/FilterDropdown.vue';
+import DataTable from '@/Components/DataTable.vue';
 import Pagination from '@/Components/Pagination.vue';
+import DetailDrawer from '@/Components/DetailDrawer.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+import UiIcon from '@/Components/UiIcon.vue';
 
 export default {
     components: {
-        AuthenticatedLayout,
         Head,
         Link,
+        AuthenticatedLayout,
+        PageHeader,
+        SearchInput,
+        FilterDropdown,
+        DataTable,
         Pagination,
+        DetailDrawer,
+        ConfirmDialog,
+        UiIcon,
     },
     props: {
-        doctors: {
-            type: Object,
-            required: true,
-        },
-        filters: {
-            type: Object,
-            default: () => ({}),
-        },
+        doctors: { type: Object, required: true },
+        filters: { type: Object, default: () => ({}) },
     },
     data() {
         return {
+            loading: false,
             form: {
                 search: this.filters.search ?? '',
                 active: this.filters.active ?? '',
             },
+            selected: null,
+            drawerOpen: false,
+            confirm: { open: false, title: '', message: '', doctorId: null },
+            columns: [
+                { key: 'doctor', label: 'Médico' },
+                { key: 'license_number', label: 'Licencia' },
+                { key: 'specialties', label: 'Especialidades' },
+                { key: 'status', label: 'Estado' },
+                { key: 'actions', label: 'Acciones', align: 'right' },
+            ],
+            statusOptions: [
+                { value: '1', label: 'Activos' },
+                { value: '0', label: 'Inactivos' },
+            ],
         };
     },
     computed: {
@@ -106,18 +188,53 @@ export default {
         canCreate() {
             return (this.$page.props.auth?.user?.roles ?? []).includes('admin');
         },
+        drawerFields() {
+            const doctor = this.selected;
+            if (!doctor) return [];
+            return [
+                { label: 'Nombre', value: `Dr. ${doctor.user?.name ?? ''} ${doctor.user?.last_name ?? ''}`.trim() },
+                { label: 'Correo', value: doctor.user?.email ?? '—' },
+                { label: 'Licencia', value: doctor.license_number || '—' },
+                { label: 'Especialidades', value: (doctor.specialties ?? []).map((item) => item.name).join(', ') || '—' },
+                { label: 'Estado', value: doctor.active ? 'Activo' : 'Inactivo' },
+            ];
+        },
     },
     methods: {
         submit() {
+            this.loading = true;
             router.get(route('doctors.index'), this.form, {
                 preserveState: true,
                 preserveScroll: true,
                 replace: true,
+                onFinish: () => { this.loading = false; },
             });
         },
-        deactivate(doctor) {
-            if (!window.confirm(`¿Desactivar el perfil de ${doctor.user?.name}? Su historial se conservará.`)) return;
-            router.delete(route('doctors.destroy', doctor.id), { preserveScroll: true });
+        requestDeactivate(doctor) {
+            this.confirm = {
+                open: true,
+                title: 'Desactivar perfil médico',
+                message: `¿Desactivar el perfil de ${doctor.user?.name}? Su historial se conservará.`,
+                doctorId: doctor.id,
+            };
+        },
+        executeConfirm() {
+            if (!this.confirm.doctorId) return;
+            this.loading = true;
+            router.delete(route('doctors.destroy', this.confirm.doctorId), {
+                preserveScroll: true,
+                onFinish: () => {
+                    this.loading = false;
+                    this.confirm.open = false;
+                },
+            });
+        },
+        openDrawer(doctor) {
+            this.selected = doctor;
+            this.drawerOpen = true;
+        },
+        initials(user) {
+            return `${user?.name?.[0] ?? ''}${user?.last_name?.[0] ?? ''}`.toUpperCase() || '—';
         },
     },
 };
