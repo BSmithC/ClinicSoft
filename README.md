@@ -33,7 +33,7 @@ npm run build
 php artisan serve
 ```
 
-El registro público está cerrado. Para crear el primer usuario con acceso clínico:
+El registro público está cerrado: se retiraron las rutas, la vista `Auth/Register.vue` y `RegisteredUserController`, y se eliminaron las referencias Ziggy al nombre `register`. Para crear el primer usuario con acceso clínico:
 
 ```bash
 php artisan tinker
@@ -82,7 +82,7 @@ php artisan test --no-ansi
 php scripts/verify_mysql.php
 ```
 
-Última ejecución verificada: **42 pruebas, 252 aserciones, todas en verde**; build correcto; `route:list` correcto; autoload sin avisos PSR-4.
+Última ejecución verificada: **45 pruebas, 269 aserciones, todas en verde**; build correcto; `route:list` correcto; autoload sin avisos PSR-4. `ZiggyRoutesTest` comprueba que ningún `route()` del frontend apunte a una ruta inexistente (error que produjo el fallback de `register` al cerrar el registro público).
 
 ### Verificación en MySQL real
 

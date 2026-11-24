@@ -52,14 +52,6 @@ defineProps({
                                 >
                                     Iniciar sesión
                                 </Link>
-
-                                <Link
-                                    v-if="canRegister"
-                                    :href="route('register')"
-                                    class="ml-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
-                                >
-                                    Registrarse
-                                </Link>
                             </template>
                         </div>
                     </div>
@@ -244,11 +236,11 @@ defineProps({
                     Empiece hoy mismo con nuestro sistema de gestión médica integral.
                 </p>
                 <Link
-                    v-if="canLogin"
-                    :href="route('register')"
+                    v-if="canLogin && !$page.props.auth.user"
+                    :href="route('login')"
                     class="mt-8 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50 sm:w-auto"
                 >
-                    Registrarse gratis
+                    Iniciar sesión
                 </Link>
             </div>
         </div>

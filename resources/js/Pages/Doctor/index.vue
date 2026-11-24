@@ -113,7 +113,7 @@
                     {{  }}
                 </td>                                
                 <td class="px-6 py-4">
-                    <a :href="route('doctors.edit')" class="font-medium text-purple-600 dark:text-purple-500 hover:underline">Edit</a>
+                    <span class="text-gray-400 dark:text-gray-500">Editar (no disponible)</span>
                 </td>
             </tr>
         </tbody>

@@ -133,26 +133,8 @@ const submit = () => {
                         </div>
                     </form>
 
-                    <div class="mt-6">
-                        <div class="relative">
-                            <div class="absolute inset-0 flex items-center">
-                                <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
-                            </div>
-                            <div class="relative flex justify-center text-sm">
-                                <span class="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                                    Don't have an account?
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="mt-6">
-                            <Link 
-                                :href="route('register')" 
-                                class="w-full flex justify-center py-2.5 px-4 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                            >
-                                Create new account
-                            </Link>
-                        </div>
+                    <div class="mt-6 rounded-lg bg-gray-50 px-4 py-3 text-center text-sm text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                        ¿No tiene una cuenta? Contacte al administrador del sistema.
                     </div>
                 </div>
             </div>
